@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --itsc-navy: #042C53;
+    --itsc-navy-light: #0a3d70;
+    --itsc-red: #A32D2D;
+}
