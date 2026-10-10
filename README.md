@@ -2,7 +2,7 @@
 
 Plataforma web que conecta a estudiantes y egresados del Instituto Técnico Superior Comunitario (ITSC) con empresas que publican ofertas de empleo y pasantías.
 
-Proyecto final de la asignatura **SOF-111 — Construcción de Software**, profesor Carlos Adames. El proyecto continúa en la asignatura SOF-113 con el mismo código base.
+Proyecto final de la asignatura **SOF-113 - PROYECTO FINAL**.
 
 ## Stack tecnológico
 
@@ -47,7 +47,7 @@ Proyecto final de la asignatura **SOF-111 — Construcción de Software**, profe
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/alexisgcn/bolsa-empleo-itsc.git
+git clone https://github.com/ioribel/Bolsa-Empleo-ITSC.git
 cd bolsa-empleo-itsc
 
 # Instalar dependencias de PHP
@@ -107,9 +107,8 @@ npm run dev
 
 ## Equipo
 
-- **Desarrollo:** Alexis Carmona
+- **Desarrollo:** Gildebran Ventura
 - **Documentación:** Gildebran Ventura
-- **Apoyo en documentación:** Madelin Decena
 ## Licencia
 
 Proyecto académico desarrollado para el Instituto Técnico Superior Comunitario (ITSC).
