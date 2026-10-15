@@ -45,8 +45,19 @@
                         Ya te has postulado a esta vacante. Revisa el estado en "Mis Postulaciones".
                     </div>
                 @else
-                    <form method="POST" action="{{ route('estudiante.vacantes.postular', $vacante) }}">
+                    <form method="POST" action="{{ route('estudiante.vacantes.postular', $vacante) }}" enctype="multipart/form-data">
                         @csrf
+                        <div class="mb-4">
+                            <x-input-label for="cv" :value="__('Currículum para esta postulación (PDF, máx. 2MB)')" />
+                            @if ($tieneCvPerfil)
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Si no seleccionas otro archivo, se usará una copia del CV guardado en tu perfil.</p>
+                            @else
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Adjunta tu CV para completar la postulación.</p>
+                            @endif
+                            <input id="cv" type="file" name="cv" accept="application/pdf,.pdf" @unless ($tieneCvPerfil) required @endunless
+                                class="block mt-1 w-full text-sm text-gray-700 dark:text-gray-300">
+                            <x-input-error :messages="$errors->get('cv')" class="mt-2" />
+                        </div>
                         <div>
                             <x-input-label for="carta_presentacion" :value="__('Carta de presentación (opcional)')" />
                             <textarea id="carta_presentacion" name="carta_presentacion" rows="4"

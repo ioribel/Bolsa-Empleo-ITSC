@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Estudiante;
 
 use App\Http\Controllers\Controller;
 use App\Models\Vacante;
+use Illuminate\Support\Facades\Storage;
 
 class VacanteController extends Controller
 {
@@ -29,7 +30,17 @@ class VacanteController extends Controller
             ->findOrFail($id);
 
         $yaPostulado = $vacante->postulaciones()->where('estudiante_id', $estudiante->id)->exists();
+        $tieneCvPerfil = false;
 
-        return view('estudiante.vacantes.show', compact('vacante', 'yaPostulado'));
+        if ($estudiante->cv_path) {
+            foreach (['local', 'public'] as $disk) {
+                if (Storage::disk($disk)->exists($estudiante->cv_path)) {
+                    $tieneCvPerfil = true;
+                    break;
+                }
+            }
+        }
+
+        return view('estudiante.vacantes.show', compact('vacante', 'yaPostulado', 'tieneCvPerfil'));
     }
 }

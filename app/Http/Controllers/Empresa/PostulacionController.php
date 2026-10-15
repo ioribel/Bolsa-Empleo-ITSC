@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Empresa;
 
 use App\Http\Controllers\Controller;
 use App\Models\Postulacion;
+use Illuminate\Support\Facades\Storage;
 
 class PostulacionController extends Controller
 {
@@ -17,6 +18,23 @@ class PostulacionController extends Controller
             ->get();
 
         return view('empresa.postulaciones.index', compact('vacante', 'postulaciones'));
+    }
+
+    public function cv(string $id)
+    {
+        $postulacion = $this->propia($id)->load('estudiante');
+        $cvPath = $postulacion->cv_path ?: $postulacion->estudiante->cv_path;
+        abort_unless($cvPath, 404);
+
+        foreach (['local', 'public'] as $disk) {
+            if (Storage::disk($disk)->exists($cvPath)) {
+                return Storage::disk($disk)->response($cvPath, 'curriculum.pdf', [
+                    'Content-Type' => 'application/pdf',
+                ]);
+            }
+        }
+
+        abort(404);
     }
 
     private function propia(string $id): Postulacion

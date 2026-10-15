@@ -67,6 +67,9 @@ Route::middleware(['auth', 'rol:empresa'])->prefix('empresa')->name('empresa.')-
     Route::get('vacantes/{vacante}/postulaciones', [\App\Http\Controllers\Empresa\PostulacionController::class, 'index'])
     ->name('vacantes.postulaciones.index');
 
+    Route::get('postulaciones/{postulacion}/cv', [\App\Http\Controllers\Empresa\PostulacionController::class, 'cv'])
+        ->name('postulaciones.cv');
+
     Route::patch('postulaciones/{postulacion}/en-revision', [\App\Http\Controllers\Empresa\PostulacionController::class, 'enRevision'])
         ->name('postulaciones.en_revision');
     Route::patch('postulaciones/{postulacion}/aceptar', [\App\Http\Controllers\Empresa\PostulacionController::class, 'aceptar'])
@@ -95,6 +98,7 @@ Route::middleware(['auth', 'rol:estudiante'])->prefix('estudiante')->name('estud
 
     Route::get('perfil', [\App\Http\Controllers\Estudiante\PerfilController::class, 'edit'])->name('perfil.edit');
     Route::post('perfil', [\App\Http\Controllers\Estudiante\PerfilController::class, 'update'])->name('perfil.update');
+    Route::get('perfil/cv', [\App\Http\Controllers\Estudiante\PerfilController::class, 'cv'])->name('perfil.cv');
 });
 
 require __DIR__.'/auth.php';

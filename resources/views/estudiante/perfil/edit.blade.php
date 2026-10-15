@@ -39,7 +39,7 @@
                         <x-input-label for="cv" :value="__('Currículum (PDF, máx. 2MB)')" />
                         @if ($estudiante->cv_path)
                             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                Actual: <a href="{{ Storage::url($estudiante->cv_path) }}" target="_blank" class="underline text-indigo-600">Ver CV</a>
+                                Actual: <a href="{{ route('estudiante.perfil.cv') }}" target="_blank" rel="noopener" class="underline text-indigo-600">Ver CV</a>
                             </p>
                         @endif
                         <input id="cv" type="file" name="cv" accept="application/pdf"

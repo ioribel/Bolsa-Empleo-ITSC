@@ -9,7 +9,7 @@ class Postulacion extends Model
     //
     protected $table = 'postulaciones';
 
-    protected $fillable = ['vacante_id', 'estudiante_id', 'carta_presentacion', 'estado'];
+    protected $fillable = ['vacante_id', 'estudiante_id', 'carta_presentacion', 'cv_path', 'estado'];
 
     public function vacante()
     {

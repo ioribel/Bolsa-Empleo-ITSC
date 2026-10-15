@@ -30,10 +30,10 @@
                                     <p class="text-sm text-gray-500 dark:text-gray-400">{{ $p->estudiante->telefono }}</p>
                                 @endif
 
-                                @if ($p->estudiante->cv_path)
-                                    <a href="{{ Storage::url($p->estudiante->cv_path) }}" target="_blank"
+                                @if ($p->cv_path || $p->estudiante->cv_path)
+                                    <a href="{{ route('empresa.postulaciones.cv', $p) }}" target="_blank" rel="noopener"
                                         class="inline-flex items-center gap-1 mt-2 text-sm font-medium text-[#042C53] underline">
-                                        📄 Ver currículum (PDF)
+                                        Ver currículum (PDF)
                                     </a>
                                 @else
                                     <p class="mt-2 text-sm text-gray-400 italic">Este estudiante no ha adjuntado CV.</p>
