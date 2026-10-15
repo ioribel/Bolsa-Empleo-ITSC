@@ -12,7 +12,9 @@
     <nav class="bg-[#042C53]">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                <span class="text-white font-bold text-lg tracking-tight">Bolsa de Empleo ITSC</span>
+                <a href="/" aria-label="Bolsa de Empleo ITSC" class="shrink-0">
+                    <img src="{{ asset('images/logo-itsc.png') }}" alt="Logo del ITSC" class="h-12 w-12 rounded-md object-contain">
+                </a>
                 <div class="flex items-center gap-4">
                     @auth
                         <a href="{{ route('dashboard') }}" class="text-sm font-medium text-white hover:text-gray-200">Ir al Dashboard</a>
