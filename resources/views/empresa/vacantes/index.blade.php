@@ -38,7 +38,61 @@
                 </div>
             @endif
 
+            <section class="mb-6 rounded-lg bg-white p-5 shadow-sm dark:bg-gray-800">
+                <form method="GET" action="{{ route('empresa.vacantes.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <label class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                        Buscar
+                        <input type="search" name="buscar" value="{{ $filters['buscar'] ?? '' }}" placeholder="Título o descripción"
+                            class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                    </label>
+                    <label class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                        Estado
+                        <select name="estado" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                            <option value="">Todos</option>
+                            <option value="borrador" @selected(($filters['estado'] ?? '') === 'borrador')>Borrador</option>
+                            <option value="publicada" @selected(($filters['estado'] ?? '') === 'publicada')>Publicada</option>
+                            <option value="cerrada" @selected(($filters['estado'] ?? '') === 'cerrada')>Cerrada</option>
+                        </select>
+                    </label>
+                    <label class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                        Carrera
+                        <select name="carrera" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                            <option value="">Todas las carreras</option>
+                            @foreach ($carreras as $carrera)
+                                <option value="{{ $carrera->id }}" @selected(($filters['carrera'] ?? '') == $carrera->id)>{{ $carrera->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                        Modalidad
+                        <select name="modalidad" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                            <option value="">Todas</option>
+                            <option value="presencial" @selected(($filters['modalidad'] ?? '') === 'presencial')>Presencial</option>
+                            <option value="remoto" @selected(($filters['modalidad'] ?? '') === 'remoto')>Remoto</option>
+                            <option value="hibrido" @selected(($filters['modalidad'] ?? '') === 'hibrido')>Híbrido</option>
+                        </select>
+                    </label>
+                    <label class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                        Tipo de empleo
+                        <select name="tipo_empleo" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                            <option value="">Todos</option>
+                            <option value="tiempo_completo" @selected(($filters['tipo_empleo'] ?? '') === 'tiempo_completo')>Tiempo completo</option>
+                            <option value="medio_tiempo" @selected(($filters['tipo_empleo'] ?? '') === 'medio_tiempo')>Medio tiempo</option>
+                            <option value="pasantia" @selected(($filters['tipo_empleo'] ?? '') === 'pasantia')>Pasantía</option>
+                        </select>
+                    </label>
+                    <div class="flex items-end gap-3">
+                        <button type="submit" class="inline-flex min-h-10 items-center rounded-md bg-blue-700 px-4 text-sm font-semibold text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Filtrar</button>
+                        <a href="{{ route('empresa.vacantes.index') }}" class="inline-flex min-h-10 items-center text-sm font-medium text-gray-900 hover:underline dark:text-gray-300">Limpiar</a>
+                    </div>
+                </form>
+                @if ($errors->any())
+                    <p class="mt-3 text-sm text-red-600">Revisa los filtros seleccionados e inténtalo de nuevo.</p>
+                @endif
+            </section>
+
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead>
                         <tr class="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
@@ -98,13 +152,15 @@
                         @empty
                             <tr>
                                 <td colspan="5" class="px-6 py-8 text-center text-gray-500">
-                                    Todavía no has creado ninguna vacante.
+                                    {{ count($filters) ? 'No hay vacantes que coincidan con esos filtros.' : 'Todavía no has creado ninguna vacante.' }}
                                 </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
+                </div>
             </div>
+            <div class="mt-4">{{ $vacantes->links() }}</div>
         </div>
     </div>
 </x-app-layout>

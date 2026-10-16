@@ -70,7 +70,7 @@
                             </div>
                         </article>
 
-                        <article class="rounded-xl border border-white/10 bg-slate-800/60 p-5 transition duration-200 hover:-translate-y-0.5 hover:bg-slate-800">
+                        <a href="{{ route('admin.vacantes.index') }}" class="block rounded-xl border border-white/10 bg-slate-800/60 p-5 transition duration-200 hover:-translate-y-0.5 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-300">
                             <div class="flex items-start justify-between gap-4">
                                 <div>
                                     <p class="text-sm font-medium text-slate-400">Vacantes activas</p>
@@ -83,7 +83,7 @@
                                     </svg>
                                 </span>
                             </div>
-                        </article>
+                        </a>
                     </div>
 
                     <div class="mt-8 border-t border-white/10 pt-6">

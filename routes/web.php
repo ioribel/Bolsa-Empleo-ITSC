@@ -32,6 +32,7 @@ Route::middleware(['auth', 'rol:admin'])->prefix('admin')->name('admin.')->group
     })->name('dashboard');
 
     Route::get('empresas', [\App\Http\Controllers\Admin\EmpresaController::class, 'index'])->name('empresas.index');
+    Route::get('vacantes', [\App\Http\Controllers\Admin\VacanteController::class, 'index'])->name('vacantes.index');
     Route::patch('empresas/{empresa}/aprobar', [\App\Http\Controllers\Admin\EmpresaController::class, 'aprobar'])->name('empresas.aprobar');
     Route::patch('empresas/{empresa}/bloquear', [\App\Http\Controllers\Admin\EmpresaController::class, 'bloquear'])->name('empresas.bloquear');
     Route::patch('empresas/{empresa}/rechazar', [\App\Http\Controllers\Admin\EmpresaController::class, 'rechazar'])->name('empresas.rechazar');

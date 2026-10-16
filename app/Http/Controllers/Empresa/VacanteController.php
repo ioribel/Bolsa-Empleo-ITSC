@@ -12,14 +12,38 @@ class VacanteController extends Controller
 {
     
 
-    public function index()
+    public function index(Request $request)
     {
-        $vacantes = auth()->user()->empresa->vacantes()
-            ->withCount('postulaciones')
-            ->latest()
-            ->get();
+        $filters = $request->validate([
+            'buscar' => ['nullable', 'string', 'max:255'],
+            'estado' => ['nullable', 'in:borrador,publicada,cerrada'],
+            'carrera' => ['nullable', 'integer', 'exists:carreras,id'],
+            'modalidad' => ['nullable', 'in:presencial,remoto,hibrido'],
+            'tipo_empleo' => ['nullable', 'in:tiempo_completo,medio_tiempo,pasantia'],
+        ]);
+        $filters = array_filter($filters, fn ($value) => filled($value));
 
-        return view('empresa.vacantes.index', compact('vacantes'));
+        $vacantes = $request->user()->empresa->vacantes()
+            ->withCount('postulaciones')
+            ->when($filters['buscar'] ?? null, function ($query, $buscar) {
+                $query->where(function ($query) use ($buscar) {
+                    $query->where('titulo', 'like', "%{$buscar}%")
+                        ->orWhere('descripcion', 'like', "%{$buscar}%");
+                });
+            })
+            ->when($filters['estado'] ?? null, fn ($query, $estado) => $query->where('estado', $estado))
+            ->when($filters['carrera'] ?? null, fn ($query, $carrera) => $query->whereHas('carreras', fn ($relacion) => $relacion->where('carreras.id', $carrera)))
+            ->when($filters['modalidad'] ?? null, fn ($query, $modalidad) => $query->where('modalidad', $modalidad))
+            ->when($filters['tipo_empleo'] ?? null, fn ($query, $tipoEmpleo) => $query->where('tipo_empleo', $tipoEmpleo))
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('empresa.vacantes.index', [
+            'vacantes' => $vacantes,
+            'carreras' => Carrera::orderBy('nombre')->get(['id', 'nombre']),
+            'filters' => $filters,
+        ]);
     }
 
     public function create()
