@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Empresa;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -27,6 +28,46 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
+        $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
+    public function test_pending_companies_cannot_authenticate(): void
+    {
+        $user = User::factory()->create(['rol' => 'empresa']);
+        Empresa::create([
+            'user_id' => $user->id,
+            'nombre_empresa' => 'Empresa Pendiente',
+            'rnc' => 'RNC-PENDIENTE',
+            'estado' => 'pendiente',
+        ]);
+
+        $response = $this->from('/login')->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertGuest();
+        $response->assertRedirect('/login')
+            ->assertSessionHasErrors('email');
+        $this->assertStringContainsString('pendiente de aprobación', session('errors')->first('email'));
+    }
+
+    public function test_approved_companies_can_authenticate(): void
+    {
+        $user = User::factory()->create(['rol' => 'empresa']);
+        Empresa::create([
+            'user_id' => $user->id,
+            'nombre_empresa' => 'Empresa Aprobada',
+            'rnc' => 'RNC-APROBADA',
+            'estado' => 'aprobada',
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticatedAs($user);
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 

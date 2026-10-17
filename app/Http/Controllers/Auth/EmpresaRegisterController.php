@@ -7,7 +7,6 @@ use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
@@ -52,8 +51,9 @@ class EmpresaRegisterController extends Controller
 
         event(new Registered($user));
 
-        Auth::login($user);
-
-        return redirect(route('dashboard', absolute: false));
+        return redirect()->route('login')->with(
+            'status',
+            'Tu solicitud para registrar la empresa fue recibida. Podrás iniciar sesión cuando el perfil sea aprobado; te avisaremos por correo.'
+        );
     }
 }

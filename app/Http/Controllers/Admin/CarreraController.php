@@ -8,11 +8,19 @@ use Illuminate\Http\Request;
 
 class CarreraController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $carreras = Carrera::withCount(['estudiantes', 'vacantes'])->orderBy('nombre')->get();
+        $filters = $request->validate([
+            'buscar' => ['nullable', 'string', 'max:255'],
+        ]);
 
-        return view('admin.carreras.index', compact('carreras'));
+        $carreras = Carrera::withCount(['estudiantes', 'vacantes'])
+            ->when($filters['buscar'] ?? null, fn ($query, $buscar) => $query->where('nombre', 'like', "%{$buscar}%"))
+            ->orderBy('nombre')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('admin.carreras.index', compact('carreras', 'filters'));
     }
 
     public function store(Request $request)

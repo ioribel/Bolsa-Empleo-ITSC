@@ -33,6 +33,24 @@
                 </form>
             </div>
 
+            <section class="mb-6 rounded-lg bg-white p-5 shadow-sm dark:bg-gray-800 sm:p-6">
+                <form method="GET" action="{{ route('admin.carreras.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <label class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                        Buscar
+                        <input type="search" name="buscar" value="{{ $filters['buscar'] ?? '' }}" placeholder="Nombre de la carrera"
+                            class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                    </label>
+                    <div class="flex items-stretch gap-3 self-end">
+                        <x-primary-button class="min-h-10">Filtrar</x-primary-button>
+                        <a href="{{ route('admin.carreras.index') }}" class="inline-flex min-h-10 items-center text-sm font-medium text-gray-900 hover:underline dark:text-gray-300">Limpiar</a>
+                    </div>
+                </form>
+                @if ($errors->any())
+                    <p class="mt-3 text-sm text-red-600">Revisa los filtros seleccionados e inténtalo de nuevo.</p>
+                @endif
+            </section>
+
+            <p class="mb-3 text-sm text-gray-900 dark:text-gray-100">{{ $carreras->total() }} {{ $carreras->total() === 1 ? 'carrera' : 'carreras' }}</p>
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead>
@@ -70,12 +88,13 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-8 text-center text-gray-500">No hay carreras registradas.</td>
+                                <td colspan="4" class="px-6 py-8 text-center text-gray-500">No se encontraron carreras con esos filtros.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
+            <div class="mt-4">{{ $carreras->links() }}</div>
         </div>
     </div>
 

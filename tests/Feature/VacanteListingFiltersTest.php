@@ -77,6 +77,49 @@ class VacanteListingFiltersTest extends TestCase
             ->assertDontSee('Backend otra carrera');
     }
 
+    public function test_admin_can_filter_companies_users_and_careers(): void
+    {
+        $admin = User::factory()->create(['rol' => 'admin']);
+        [$companyUser] = $this->createCompany('Mercado Central');
+        Empresa::where('user_id', $companyUser->id)->update(['estado' => 'pendiente']);
+        $this->createCompany('Mercado Norte');
+        User::factory()->create([
+            'name' => 'Usuario Estudiante Activo',
+            'rol' => 'estudiante',
+            'email_verified_at' => now(),
+        ]);
+        User::factory()->create([
+            'name' => 'Usuario Estudiante Bloqueado',
+            'rol' => 'estudiante',
+            'email_verified_at' => null,
+        ]);
+        Carrera::create(['nombre' => 'Ingeniería de Software']);
+        Carrera::create(['nombre' => 'Administración']);
+
+        $this->actingAs($admin)
+            ->get(route('admin.empresas.index', ['buscar' => 'Central', 'estado' => 'pendiente']))
+            ->assertOk()
+            ->assertSee('Mercado Central')
+            ->assertDontSee('Mercado Norte');
+
+        $this->get(route('admin.usuarios.index', ['buscar' => 'Usuario Estudiante', 'rol' => 'estudiante', 'estado' => 'activo']))
+            ->assertOk()
+            ->assertSee('Usuario Estudiante Activo')
+            ->assertDontSee('Usuario Estudiante Bloqueado');
+
+        $this->get(route('admin.usuarios.index'))
+            ->assertOk()
+            ->assertDontSee('Mercado Central')
+            ->assertDontSee('Mercado Norte')
+            ->assertDontSee('Usuario Empresa Activo');
+
+        $this->get(route('admin.carreras.index', ['buscar' => 'Software']))
+            ->assertOk()
+            ->assertSee('Ingeniería de Software')
+            ->assertDontSee('Administración')
+            ->assertSee('Agregar carrera');
+    }
+
     private function createCompany(string $name): array
     {
         $user = User::factory()->create(['rol' => 'empresa']);

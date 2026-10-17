@@ -1,6 +1,6 @@
 <x-guest-layout>
 
-    <div class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">
+    <div class="mb-4 text-lg font-semibold text-gray-800 dark:text-dim gray">
         {{ __('Registro de Empresa') }}
     </div>
     <form method="POST" action="{{ route('register.empresa') }}">
