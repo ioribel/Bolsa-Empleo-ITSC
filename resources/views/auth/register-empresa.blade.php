@@ -8,42 +8,42 @@
 
         <!-- Name -->
         <div>
-            <x-input-label for="name" :value="__('Name')" />
+            <x-input-label for="name" :value="__('Name')" class="!text-gray-500" />
             <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
         <!-- Email Address -->
         <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
+            <x-input-label for="email" :value="__('Email')" class="!text-gray-500" />
             <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
         <!-- Nombre de la empresa -->
         <div class="mt-4">
-            <x-input-label for="nombre_empresa" :value="__('Nombre de la empresa')" />
+            <x-input-label for="nombre_empresa" :value="__('Nombre de la empresa')" class="!text-gray-500" />
             <x-text-input id="nombre_empresa" class="block mt-1 w-full" type="text" name="nombre_empresa" :value="old('nombre_empresa')" required />
             <x-input-error :messages="$errors->get('nombre_empresa')" class="mt-2" />
         </div>
 
         <!-- RNC -->
         <div class="mt-4">
-            <x-input-label for="rnc" :value="__('RNC')" />
+            <x-input-label for="rnc" :value="__('RNC')" class="!text-gray-500" />
             <x-text-input id="rnc" class="block mt-1 w-full" type="text" name="rnc" :value="old('rnc')" required />
             <x-input-error :messages="$errors->get('rnc')" class="mt-2" />
         </div>
 
         <!-- Teléfono -->
         <div class="mt-4">
-            <x-input-label for="telefono" :value="__('Teléfono')" />
+            <x-input-label for="telefono" :value="__('Teléfono')" class="!text-gray-500" />
             <x-text-input id="telefono" class="block mt-1 w-full" type="text" name="telefono" :value="old('telefono')" />
             <x-input-error :messages="$errors->get('telefono')" class="mt-2" />
         </div>
 
         <!-- Password -->
         <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+            <x-input-label for="password" :value="__('Password')" class="!text-gray-500" />
 
             <x-text-input id="password" class="block mt-1 w-full"
                             type="password"
@@ -55,7 +55,7 @@
 
         <!-- Confirm Password -->
         <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
+            <x-input-label for="password_confirmation" :value="__('Confirm Password')" class="!text-gray-500" />
 
             <x-text-input id="password_confirmation" class="block mt-1 w-full"
                             type="password"

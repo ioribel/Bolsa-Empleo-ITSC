@@ -17,7 +17,7 @@
                 </a>
                 <div class="flex items-center gap-4">
                     @auth
-                        <a href="{{ route('dashboard') }}" class="text-sm font-medium text-white hover:text-gray-200">Ir al Dashboard</a>
+                        <a href="{{ route('dashboard') }}" class="text-sm font-medium text-white hover:text-gray-200">Ir al panel</a>
                     @else
                         <a href="{{ route('login') }}" class="text-sm font-medium text-gray-200 hover:text-white">Iniciar sesión</a>
                         <a href="{{ route('register') }}" class="inline-flex items-center px-4 py-2 bg-[#A32D2D] hover:bg-[#8a2525] rounded-md text-sm font-semibold text-white transition">Registrarme</a>

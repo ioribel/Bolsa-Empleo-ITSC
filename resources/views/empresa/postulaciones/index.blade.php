@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-600 leading-tight">
             {{ __('Postulantes: ') }}{{ $vacante->titulo }}
         </h2>
     </x-slot>
@@ -32,7 +32,7 @@
 
                                 @if ($p->cv_path || $p->estudiante->cv_path)
                                     <a href="{{ route('empresa.postulaciones.cv', $p) }}" target="_blank" rel="noopener"
-                                        class="inline-flex items-center gap-1 mt-2 text-sm font-medium text-[#042C53] underline">
+                                        class="inline-flex items-center gap-1 mt-2 text-sm font-medium text-gray-500 dark:text-gray-200 underline">
                                         Ver currículum (PDF)
                                     </a>
                                 @else

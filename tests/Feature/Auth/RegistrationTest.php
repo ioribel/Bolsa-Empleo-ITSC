@@ -14,7 +14,19 @@ class RegistrationTest extends TestCase
     {
         $response = $this->get('/register');
 
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertSee('Nombre')
+            ->assertSee('Correo electrónico')
+            ->assertSee('Confirmar contraseña')
+            ->assertSee('¿Ya tienes una cuenta?')
+            ->assertSee('Registrarme')
+            ->assertDontSee('Already registered?');
+
+        $this->get('/register/empresa')
+            ->assertOk()
+            ->assertSee('Nombre')
+            ->assertSee('Correo electrónico')
+            ->assertSee('Registrarme');
     }
 
     public function test_new_users_can_register(): void

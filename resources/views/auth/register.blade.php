@@ -1,6 +1,6 @@
 <x-guest-layout>
 
-    <div class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">
+    <div class="mb-4 text-lg font-semibold text-gray-500 dark:text-gray-500">
         {{ __('Registro de Estudiante/Egresado') }}
     </div>
     <form method="POST" action="{{ route('register') }}">
@@ -8,28 +8,28 @@
 
         <!-- Name -->
         <div>
-            <x-input-label for="name" :value="__('Name')" />
+            <x-input-label for="name" :value="__('Name')" class="!text-gray-500" />
             <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
         <!-- Email Address -->
         <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
+            <x-input-label for="email" :value="__('Email')" class="!text-gray-500" />
             <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
         <!-- Matrícula -->
         <div class="mt-4">
-            <x-input-label for="matricula" :value="__('Matrícula')" />
+            <x-input-label for="matricula" :value="__('Matrícula')" class="!text-gray-500" />
             <x-text-input id="matricula" class="block mt-1 w-full" type="text" name="matricula" :value="old('matricula')" required />
             <x-input-error :messages="$errors->get('matricula')" class="mt-2" />
         </div>
 
         <!-- Carrera -->
         <div class="mt-4">
-            <x-input-label for="carrera_id" :value="__('Carrera')" />
+            <x-input-label for="carrera_id" :value="__('Carrera')" class="!text-gray-500" />
             <select id="carrera_id" name="carrera_id" required
                 class="block mt-1 w-full border-gray-300 focus:border-[#042C53] focus:ring-[#A32D2D] rounded-md shadow-sm">
                 <option value="">Selecciona tu carrera</option>
@@ -44,7 +44,7 @@
 
         <!-- Tipo -->
         <div class="mt-4">
-            <x-input-label for="tipo" :value="__('Condición')" />
+            <x-input-label for="tipo" :value="__('Condición')" class="!text-gray-500" />
             <select id="tipo" name="tipo" required
                 class="block mt-1 w-full border-gray-300 focus:border-[#042C53] focus:ring-[#A32D2D] rounded-md shadow-sm">
                 <option value="estudiante" @selected(old('tipo') == 'estudiante')>Estudiante activo</option>
@@ -55,7 +55,7 @@
 
         <!-- Password -->
         <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+            <x-input-label for="password" :value="__('Password')" class="!text-gray-500" />
 
             <x-text-input id="password" class="block mt-1 w-full"
                             type="password"
@@ -67,7 +67,7 @@
 
         <!-- Confirm Password -->
         <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
+            <x-input-label for="password_confirmation" :value="__('Confirm Password')" class="!text-gray-500" />
 
             <x-text-input id="password_confirmation" class="block mt-1 w-full"
                             type="password"

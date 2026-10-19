@@ -22,7 +22,7 @@
                         Rol
                         <select name="rol" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                             <option value="">Todos los roles</option>
-                            <option value="admin" @selected(($filters['rol'] ?? '') === 'admin')>Admin</option>
+                            <option value="admin" @selected(($filters['rol'] ?? '') === 'admin')>Administrador</option>
                             <option value="estudiante" @selected(($filters['rol'] ?? '') === 'estudiante')>Estudiante</option>
                         </select>
                     </label>
@@ -62,7 +62,7 @@
                                 <td class="px-6 py-4">{{ $usuario->name }}</td>
                                 <td class="px-6 py-4">{{ $usuario->email }}</td>
                                 <td class="px-6 py-4">
-                                    <span class="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 rounded-full">{{ ucfirst($usuario->rol) }}</span>
+                                    <span class="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 rounded-full">{{ ['admin' => 'Administrador', 'estudiante' => 'Estudiante'][$usuario->rol] ?? ucfirst($usuario->rol) }}</span>
                                 </td>
                                 <td class="px-6 py-4">
                                     @if ($usuario->email_verified_at)
