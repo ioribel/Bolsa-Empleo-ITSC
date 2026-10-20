@@ -28,8 +28,11 @@
     </nav>
 
     <!-- Hero -->
-    <section class="bg-[#042C53]">
-        <div class="max-w-5xl mx-auto px-6 py-24 text-center">
+    <section class="relative isolate overflow-hidden bg-[#042C53]">
+        <img src="{{ asset('images/itsclanding.jpeg') }}" alt="" aria-hidden="true"
+             class="absolute inset-0 h-full w-full object-cover object-center">
+        <div class="absolute inset-0 bg-[#042C53]/75" aria-hidden="true"></div>
+        <div class="relative z-10 max-w-5xl mx-auto px-6 py-24 text-center">
             <h1 class="text-4xl sm:text-5xl font-bold text-white leading-tight">
                 Conectamos el talento del ITSC<br>con las empresas del país
             </h1>
