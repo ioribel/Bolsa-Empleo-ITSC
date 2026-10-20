@@ -6,6 +6,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>{{ config('app.name', 'Bolsa de Empleo ITSC') }}</title>
+        <link rel="icon" type="image/png" href="{{ asset('images/logo-itsc.png') }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

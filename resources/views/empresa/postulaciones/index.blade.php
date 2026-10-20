@@ -5,8 +5,8 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-6 sm:py-12">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             @if (session('status'))
                 <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-md">{{ session('status') }}</div>
             @endif
@@ -20,14 +20,14 @@
 
             <div class="space-y-4">
                 @forelse ($postulaciones as $p)
-                    <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ $p->estudiante->user->name }}</h3>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ $p->estudiante->carrera->nombre }} · {{ $p->estudiante->matricula }}</p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ $p->estudiante->user->email }}</p>
+                    <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4 sm:p-6">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div class="min-w-0">
+                                <h3 class="break-words font-semibold text-gray-900 dark:text-gray-100">{{ $p->estudiante->user->name }}</h3>
+                                <p class="break-words text-sm text-gray-500 dark:text-gray-400">{{ $p->estudiante->carrera->nombre }} · {{ $p->estudiante->matricula }}</p>
+                                <p class="break-all text-sm text-gray-500 dark:text-gray-400">{{ $p->estudiante->user->email }}</p>
                                 @if ($p->estudiante->telefono)
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $p->estudiante->telefono }}</p>
+                                    <p class="break-words text-sm text-gray-500 dark:text-gray-400">{{ $p->estudiante->telefono }}</p>
                                 @endif
 
                                 @if ($p->cv_path || $p->estudiante->cv_path)
@@ -39,7 +39,7 @@
                                     <p class="mt-2 text-sm text-gray-400 italic">Este estudiante no ha adjuntado CV.</p>
                                 @endif
                             </div>
-                            <span class="px-2 py-1 text-xs rounded-full
+                            <span class="inline-flex w-fit shrink-0 px-2 py-1 text-xs rounded-full
                                 @if($p->estado === 'aceptada') bg-green-100 text-green-800
                                 @elseif($p->estado === 'rechazada') bg-red-100 text-red-800
                                 @elseif($p->estado === 'en_revision') bg-blue-100 text-blue-800
@@ -49,14 +49,14 @@
                         </div>
 
                         @if ($p->estudiante->resumen)
-                            <p class="mt-3 text-sm text-gray-600 dark:text-gray-300">{{ $p->estudiante->resumen }}</p>
+                            <p class="mt-3 break-words text-sm text-gray-600 dark:text-gray-300">{{ $p->estudiante->resumen }}</p>
                         @endif
 
                         @if ($p->carta_presentacion)
-                            <p class="mt-3 text-sm text-gray-700 dark:text-gray-300 italic">"{{ $p->carta_presentacion }}"</p>
+                            <p class="mt-3 break-words text-sm text-gray-700 dark:text-gray-300 italic">"{{ $p->carta_presentacion }}"</p>
                         @endif
 
-                        <div class="mt-4 flex items-center gap-3">
+                        <div class="mt-4 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                             @if ($p->estado === 'recibida')
                                 <form method="POST" action="{{ route('empresa.postulaciones.en_revision', $p) }}" class="inline">
                                     @csrf @method('PATCH')

@@ -5,8 +5,8 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-6 sm:py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             @if (session('status'))
                 <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-md">
                     {{ session('status') }}
@@ -91,7 +91,68 @@
                 @endif
             </section>
 
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="space-y-3 lg:hidden">
+                @forelse ($vacantes as $vacante)
+                    <article class="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800">
+                        <h3 class="break-words font-semibold text-gray-900 dark:text-gray-100">{{ $vacante->titulo }}</h3>
+                        <div class="mt-3 flex flex-wrap items-center gap-2">
+                            <span class="inline-flex rounded-full px-2 py-1 text-xs
+                                @if($vacante->estado === 'publicada') bg-green-100 text-green-800
+                                @elseif($vacante->estado === 'borrador') bg-yellow-100 text-yellow-800
+                                @else bg-gray-200 text-gray-700 @endif">
+                                {{ ucfirst($vacante->estado) }}
+                            </span>
+                        </div>
+                        <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <dt class="text-gray-500 dark:text-gray-400">Postulaciones</dt>
+                                <dd class="font-medium text-gray-900 dark:text-gray-100">{{ $vacante->postulaciones_count }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-gray-500 dark:text-gray-400">Cierre</dt>
+                                <dd class="font-medium text-gray-900 dark:text-gray-100">{{ $vacante->fecha_cierre ?? '—' }}</dd>
+                            </div>
+                        </dl>
+                        <div class="mt-4 flex flex-wrap gap-x-4 gap-y-2 border-t border-gray-200 pt-3 dark:border-gray-700">
+                            <a href="{{ route('empresa.vacantes.show', $vacante) }}" class="py-1 text-sm font-medium text-gray-600 underline dark:text-gray-400">Ver</a>
+                            <a href="{{ route('empresa.vacantes.edit', $vacante) }}" class="py-1 text-sm font-medium text-indigo-600 underline">Editar</a>
+                            <a href="{{ route('empresa.vacantes.postulaciones.index', $vacante) }}" class="py-1 text-sm font-medium text-blue-600 underline">
+                                Postulantes ({{ $vacante->postulaciones_count }})
+                            </a>
+
+                            @if ($vacante->estado === 'borrador')
+                                <form method="POST" action="{{ route('empresa.vacantes.publicar', $vacante) }}">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="py-1 text-sm font-medium text-green-600 underline">Publicar</button>
+                                </form>
+                            @elseif ($vacante->estado === 'publicada')
+                                <form method="POST" action="{{ route('empresa.vacantes.cerrar', $vacante) }}"
+                                      onsubmit="return confirm('¿Cerrar esta vacante? Dejará de aceptar postulaciones.');">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="py-1 text-sm font-medium text-orange-600 underline">Cerrar</button>
+                                </form>
+                            @endif
+
+                            @if ($vacante->estado === 'borrador')
+                                <form method="POST" action="{{ route('empresa.vacantes.destroy', $vacante) }}"
+                                      onsubmit="return confirm('¿Eliminar esta vacante? Esta acción no se puede deshacer.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="py-1 text-sm font-medium text-red-600 underline">Eliminar</button>
+                                </form>
+                            @endif
+                        </div>
+                    </article>
+                @empty
+                    <p class="rounded-lg bg-white p-6 text-center text-sm text-gray-500 shadow-sm dark:bg-gray-800">
+                        {{ count($filters) ? 'No hay vacantes que coincidan con esos filtros.' : 'Todavía no has creado ninguna vacante.' }}
+                    </p>
+                @endforelse
+            </div>
+
+            <div class="hidden overflow-hidden bg-white shadow-sm dark:bg-gray-800 lg:block lg:rounded-lg">
                 <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead>

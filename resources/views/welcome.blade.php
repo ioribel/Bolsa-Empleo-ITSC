@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Bolsa de Empleo del ITSC</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo-itsc.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="antialiased bg-white">

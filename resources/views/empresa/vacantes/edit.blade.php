@@ -5,9 +5,9 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
+    <div class="py-6 sm:py-12">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4 sm:p-6">
                 <form method="POST" action="{{ route('empresa.vacantes.update', $vacante) }}">
                     @csrf
                     @method('PUT')
@@ -32,7 +32,7 @@
                         <x-input-error :messages="$errors->get('requisitos')" class="mt-2" />
                     </div>
 
-                    <div class="mt-4 grid grid-cols-2 gap-4">
+                    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <x-input-label for="tipo_empleo" :value="__('Tipo de empleo')" />
                             <select id="tipo_empleo" name="tipo_empleo" required
@@ -58,7 +58,7 @@
                         <x-text-input id="ubicacion" class="block mt-1 w-full" type="text" name="ubicacion" :value="old('ubicacion', $vacante->ubicacion)" />
                     </div>
 
-                    <div class="mt-4 grid grid-cols-2 gap-4">
+                    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <x-input-label for="salario_min" :value="__('Salario mínimo (RD$)')" />
                             <x-text-input id="salario_min" class="block mt-1 w-full" type="number" step="0.01" name="salario_min" :value="old('salario_min', $vacante->salario_min)" />
@@ -79,7 +79,7 @@
 
                     <div class="mt-4">
                         <x-input-label :value="__('Carreras dirigidas')" />
-                        <div class="mt-2 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-700 rounded-md p-3">
+                        <div class="mt-2 grid grid-cols-1 gap-2 max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-700 rounded-md p-3 sm:grid-cols-2">
                             @foreach ($carreras as $carrera)
                                 <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                                     <input type="checkbox" name="carreras[]" value="{{ $carrera->id }}"
@@ -92,9 +92,9 @@
                         <x-input-error :messages="$errors->get('carreras')" class="mt-2" />
                     </div>
 
-                    <div class="flex items-center justify-end mt-6">
-                        <a href="{{ route('empresa.vacantes.index') }}" class="text-sm text-gray-600 dark:text-gray-400 underline mr-4">Cancelar</a>
-                        <x-primary-button>{{ __('Guardar cambios') }}</x-primary-button>
+                    <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+                        <a href="{{ route('empresa.vacantes.index') }}" class="text-center text-sm text-gray-600 dark:text-gray-400 underline sm:mr-4">Cancelar</a>
+                        <x-primary-button class="w-full justify-center sm:w-auto">{{ __('Guardar cambios') }}</x-primary-button>
                     </div>
                 </form>
             </div>

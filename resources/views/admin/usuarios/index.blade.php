@@ -5,8 +5,8 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-6 sm:py-12">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             @if (session('status'))
                 <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-md">{{ session('status') }}</div>
             @endif
@@ -45,7 +45,45 @@
             </section>
 
             <p class="mb-3 text-sm text-gray-900 dark:text-gray-100">{{ $usuarios->total() }} {{ $usuarios->total() === 1 ? 'usuario' : 'usuarios' }}</p>
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="space-y-3 lg:hidden">
+                @forelse ($usuarios as $usuario)
+                    <article class="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800">
+                        <h3 class="break-words font-semibold text-gray-900 dark:text-gray-100">{{ $usuario->name }}</h3>
+                        <p class="mt-1 break-all text-sm text-gray-600 dark:text-gray-300">{{ $usuario->email }}</p>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <span class="rounded-full bg-gray-200 px-2 py-1 text-xs text-gray-800 dark:bg-gray-700 dark:text-gray-100">
+                                {{ ['admin' => 'Administrador', 'estudiante' => 'Estudiante'][$usuario->rol] ?? ucfirst($usuario->rol) }}
+                            </span>
+                            @if ($usuario->email_verified_at)
+                                <span class="rounded-full bg-green-100 px-2 py-1 text-xs text-green-800">Activo</span>
+                            @else
+                                <span class="rounded-full bg-red-100 px-2 py-1 text-xs text-red-800">Bloqueado</span>
+                            @endif
+                        </div>
+                        <div class="mt-4 border-t border-gray-200 pt-3 dark:border-gray-700">
+                            @if ($usuario->email_verified_at)
+                                <form method="POST" action="{{ route('admin.usuarios.bloquear', $usuario) }}"
+                                      onsubmit="return confirm('¿Bloquear a este usuario?');">
+                                    @csrf @method('PATCH')
+                                    <button type="submit" class="text-sm font-medium text-red-600 underline">Bloquear</button>
+                                </form>
+                            @else
+                                <form method="POST" action="{{ route('admin.usuarios.activar', $usuario) }}">
+                                    @csrf @method('PATCH')
+                                    <button type="submit" class="text-sm font-medium text-green-600 underline">Activar</button>
+                                </form>
+                            @endif
+                        </div>
+                    </article>
+                @empty
+                    <p class="rounded-lg bg-white p-6 text-center text-sm text-gray-500 shadow-sm dark:bg-gray-800">
+                        No se encontraron usuarios con esos filtros.
+                    </p>
+                @endforelse
+            </div>
+
+            <div class="hidden overflow-hidden bg-white shadow-sm dark:bg-gray-800 lg:block lg:rounded-lg">
+                <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead>
                         <tr class="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
@@ -93,6 +131,7 @@
                         @endforelse
                     </tbody>
                 </table>
+                </div>
             </div>
             <div class="mt-4">{{ $usuarios->links() }}</div>
         </div>
