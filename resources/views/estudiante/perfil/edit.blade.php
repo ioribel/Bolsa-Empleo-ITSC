@@ -11,6 +11,9 @@
                 @if (session('status'))
                     <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-md">{{ session('status') }}</div>
                 @endif
+                @if (session('error'))
+                    <div class="mb-4 p-4 bg-red-100 text-red-800 rounded-md">{{ session('error') }}</div>
+                @endif
 
                 <div class="mb-6 grid grid-cols-2 gap-4 text-sm">
                     <div><span class="text-gray-500">Nombre:</span> {{ $estudiante->user->name }}</div>
@@ -39,7 +42,13 @@
                         <x-input-label for="cv" :value="__('Currículum (PDF, máx. 2MB)')" />
                         @if ($estudiante->cv_path)
                             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                Actual: <a href="{{ route('estudiante.perfil.cv') }}" target="_blank" rel="noopener" class="underline text-indigo-600">Ver CV</a>
+                                @if ($cvDetails)
+                                    Archivo actual: {{ $cvDetails['name'] }}
+                                    ({{ number_format($cvDetails['size'] / 1024, 0) }} KB).
+                                @else
+                                    Hay un currículum registrado, pero el archivo no está disponible.
+                                @endif
+                                <a href="{{ route('estudiante.perfil.cv') }}" target="_blank" rel="noopener" class="ml-1 underline text-indigo-600">Ver CV</a>
                             </p>
                         @endif
                         <input id="cv" type="file" name="cv" accept="application/pdf"
@@ -51,6 +60,15 @@
                         <x-primary-button>{{ __('Guardar cambios') }}</x-primary-button>
                     </div>
                 </form>
+
+                @if ($estudiante->cv_path)
+                    <form method="POST" action="{{ route('estudiante.perfil.cv.destroy') }}" class="mt-3 text-right"
+                          onsubmit="return confirm('¿Eliminar tu currículum? Esta acción no se puede deshacer.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="text-sm font-medium text-red-600 underline">Eliminar currículum</button>
+                    </form>
+                @endif
             </div>
         </div>
     </div>

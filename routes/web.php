@@ -94,12 +94,19 @@ Route::middleware(['auth', 'rol:estudiante'])->prefix('estudiante')->name('estud
 
     Route::get('vacantes', [\App\Http\Controllers\Estudiante\VacanteController::class, 'index'])->name('vacantes.index');
     Route::get('vacantes/{vacante}', [\App\Http\Controllers\Estudiante\VacanteController::class, 'show'])->name('vacantes.show');
+    Route::post('vacantes/{vacante}/analisis-cv', [\App\Http\Controllers\Estudiante\EmployabilityAnalysisController::class, 'analyze'])
+        ->middleware('throttle:cv-analysis')
+        ->name('vacantes.analizar-cv');
+    Route::post('vacantes/{vacante}/cv-adaptado', [\App\Http\Controllers\Estudiante\EmployabilityAnalysisController::class, 'downloadAdaptedCv'])
+        ->middleware('throttle:cv-analysis')
+        ->name('vacantes.cv-adaptado');
     Route::post('vacantes/{vacante}/postular', [\App\Http\Controllers\Estudiante\PostulacionController::class, 'store'])->name('vacantes.postular');
     Route::get('postulaciones', [\App\Http\Controllers\Estudiante\PostulacionController::class, 'index'])->name('postulaciones.index');
 
     Route::get('perfil', [\App\Http\Controllers\Estudiante\PerfilController::class, 'edit'])->name('perfil.edit');
     Route::post('perfil', [\App\Http\Controllers\Estudiante\PerfilController::class, 'update'])->name('perfil.update');
     Route::get('perfil/cv', [\App\Http\Controllers\Estudiante\PerfilController::class, 'cv'])->name('perfil.cv');
+    Route::delete('perfil/cv', [\App\Http\Controllers\Estudiante\PerfilController::class, 'destroyCv'])->name('perfil.cv.destroy');
 });
 
 require __DIR__.'/auth.php';

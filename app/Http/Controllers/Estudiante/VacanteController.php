@@ -67,6 +67,8 @@ class VacanteController extends Controller
             }
         }
 
-        return view('estudiante.vacantes.show', compact('vacante', 'yaPostulado', 'tieneCvPerfil'));
+        $dirigidaASuCarrera = $vacante->carreras->contains('id', $estudiante->carrera_id);
+
+        return view('estudiante.vacantes.show', compact('vacante', 'yaPostulado', 'tieneCvPerfil', 'dirigidaASuCarrera'));
     }
 }

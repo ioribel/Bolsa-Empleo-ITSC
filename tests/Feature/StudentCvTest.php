@@ -31,11 +31,89 @@ class StudentCvTest extends TestCase
             ->assertSessionHasNoErrors();
 
         $cvPath = $estudiante->refresh()->cv_path;
+        $this->assertSame('curriculum.pdf', $estudiante->cv_original_name);
         Storage::disk('local')->assertExists($cvPath);
 
         $this->get(route('estudiante.perfil.cv'))
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_student_can_replace_profile_cv_and_remove_previous_file(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+        [$studentUser, $estudiante] = $this->createStudent();
+        $oldCvPath = 'cvs/perfiles/cv-anterior.pdf';
+        Storage::disk('local')->put($oldCvPath, '%PDF-1.4 old');
+        $estudiante->update([
+            'cv_path' => $oldCvPath,
+            'cv_original_name' => 'cv-anterior.pdf',
+        ]);
+
+        $this->actingAs($studentUser)
+            ->post(route('estudiante.perfil.update'), [
+                'cv' => UploadedFile::fake()->create('cv-actualizado.pdf', 120, 'application/pdf'),
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('status', 'Perfil actualizado.');
+
+        $estudiante->refresh();
+        $this->assertSame('cv-actualizado.pdf', $estudiante->cv_original_name);
+        $this->assertNotSame($oldCvPath, $estudiante->cv_path);
+        Storage::disk('local')->assertExists($estudiante->cv_path);
+        Storage::disk('local')->assertMissing($oldCvPath);
+    }
+
+    public function test_student_can_delete_their_private_profile_cv(): void
+    {
+        Storage::fake('local');
+        [$studentUser, $estudiante] = $this->createStudent();
+        $cvPath = 'cvs/perfiles/curriculum.pdf';
+        Storage::disk('local')->put($cvPath, '%PDF-1.4 fake');
+        $estudiante->update([
+            'cv_path' => $cvPath,
+            'cv_original_name' => 'curriculum.pdf',
+        ]);
+
+        $this->actingAs($studentUser)
+            ->delete(route('estudiante.perfil.cv.destroy'))
+            ->assertSessionHas('status', 'Currículum eliminado.');
+
+        Storage::disk('local')->assertMissing($cvPath);
+        $this->assertNull($estudiante->refresh()->cv_path);
+        $this->assertNull($estudiante->cv_original_name);
+    }
+
+    public function test_student_profile_page_renders_upload_and_delete_as_separate_forms(): void
+    {
+        Storage::fake('local');
+        [$studentUser, $estudiante] = $this->createStudent();
+        $cvPath = 'cvs/perfiles/curriculum.pdf';
+        Storage::disk('local')->put($cvPath, '%PDF-1.4 fake');
+        $estudiante->update(['cv_path' => $cvPath, 'cv_original_name' => 'curriculum.pdf']);
+
+        $response = $this->actingAs($studentUser)->get(route('estudiante.perfil.edit'));
+        $response->assertOk();
+
+        $document = new \DOMDocument;
+        $previousErrorHandling = libxml_use_internal_errors(true);
+        $loaded = $document->loadHTML($response->getContent());
+        libxml_clear_errors();
+        libxml_use_internal_errors($previousErrorHandling);
+        $this->assertTrue($loaded);
+        $xpath = new \DOMXPath($document);
+
+        foreach ($xpath->query('//form') as $form) {
+            $this->assertSame(0, $xpath->query('.//form', $form)->length);
+        }
+
+        $uploadForms = $xpath->query('//form[.//input[@name="cv"]]');
+        $deleteForms = $xpath->query('//form[.//input[@name="_method" and @value="DELETE"]]');
+
+        $this->assertSame(1, $uploadForms->length);
+        $this->assertSame(1, $deleteForms->length);
+        $this->assertFalse($uploadForms->item(0)->isSameNode($deleteForms->item(0)));
     }
 
     public function test_uploaded_application_cv_is_visible_only_to_the_vacancy_owner(): void

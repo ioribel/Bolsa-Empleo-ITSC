@@ -11,8 +11,22 @@ class PerfilController extends Controller
     public function edit()
     {
         $estudiante = auth()->user()->estudiante;
+        $cvDetails = null;
 
-        return view('estudiante.perfil.edit', compact('estudiante'));
+        if ($estudiante->cv_path) {
+            foreach (['local', 'public'] as $disk) {
+                if (Storage::disk($disk)->exists($estudiante->cv_path)) {
+                    $cvDetails = [
+                        'name' => $estudiante->cv_original_name ?: basename($estudiante->cv_path),
+                        'size' => Storage::disk($disk)->size($estudiante->cv_path),
+                    ];
+
+                    break;
+                }
+            }
+        }
+
+        return view('estudiante.perfil.edit', compact('estudiante', 'cvDetails'));
     }
 
     public function cv()
@@ -46,13 +60,20 @@ class PerfilController extends Controller
 
         if ($request->hasFile('cv')) {
             $previousCvPath = $estudiante->cv_path;
-            $estudiante->cv_path = $request->file('cv')->store('cvs/perfiles', 'local');
+            $uploadedCv = $request->file('cv');
+            $newCvPath = $uploadedCv->store('cvs/perfiles', 'local');
 
-            if ($previousCvPath) {
+            if (! $newCvPath) {
+                return back()->with('error', 'No se pudo guardar el currículum. Inténtalo nuevamente.');
+            }
+
+            $estudiante->cv_path = $newCvPath;
+            $estudiante->cv_original_name = $this->safeOriginalName($uploadedCv->getClientOriginalName());
+
+            if ($previousCvPath && $previousCvPath !== $newCvPath) {
                 foreach (['local', 'public'] as $disk) {
                     if (Storage::disk($disk)->exists($previousCvPath)) {
                         Storage::disk($disk)->delete($previousCvPath);
-                        break;
                     }
                 }
             }
@@ -61,5 +82,34 @@ class PerfilController extends Controller
         $estudiante->save();
 
         return back()->with('status', 'Perfil actualizado.');
+    }
+
+    public function destroyCv()
+    {
+        $estudiante = auth()->user()->estudiante;
+
+        if ($estudiante->cv_path) {
+            foreach (['local', 'public'] as $disk) {
+                if (Storage::disk($disk)->exists($estudiante->cv_path)
+                    && ! Storage::disk($disk)->delete($estudiante->cv_path)) {
+                    return back()->with('error', 'No se pudo eliminar el archivo del currículum. Inténtalo nuevamente.');
+                }
+            }
+        }
+
+        $estudiante->forceFill([
+            'cv_path' => null,
+            'cv_original_name' => null,
+        ])->save();
+
+        return back()->with('status', 'Currículum eliminado.');
+    }
+
+    private function safeOriginalName(string $name): string
+    {
+        $name = basename($name);
+        $name = preg_replace('/[\x00-\x1F\x7F]/u', '', $name);
+
+        return mb_substr(trim($name) ?: 'curriculum.pdf', 0, 255);
     }
 }
