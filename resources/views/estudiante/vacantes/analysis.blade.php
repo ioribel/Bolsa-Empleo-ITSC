@@ -23,8 +23,7 @@
                         {{ number_format($analysis['compatibility_percentage'], 1) }}%
                     </p>
                     <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                        {{ count(array_filter($analysis['criteria'], fn ($criterion) => $criterion['matched'])) }} de {{ count($analysis['criteria']) }}
-                        criterios tienen una cita textual que contiene al menos la mitad de sus palabras clave verificables en el CV.
+                        El cálculo pondera coincidencias directas como completas y coincidencias relacionadas como parciales (50%). No es una probabilidad de contratación.
                     </p>
                 @endif
 
@@ -34,13 +33,14 @@
                             <li class="py-3">
                                 <div class="flex flex-wrap items-center justify-between gap-2">
                                     <p class="font-medium text-gray-900 dark:text-gray-100">{{ $criterion['requirement'] }}</p>
-                                    <span class="rounded-full px-2 py-1 text-xs {{ $criterion['matched'] ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
-                                        {{ $criterion['matched'] ? 'Coincidencia documentada' : 'No identificado en el CV' }}
+                                    <span class="rounded-full px-2 py-1 text-xs {{ $criterion['match'] === 'direct' ? 'bg-green-100 text-green-800' : ($criterion['match'] === 'related' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800') }}">
+                                        {{ $criterion['match'] === 'direct' ? 'Coincidencia directa' : ($criterion['match'] === 'related' ? 'Coincidencia relacionada' : 'No identificado en el CV') }}
                                     </span>
                                 </div>
                                 @if ($criterion['matched'])
                                     <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Evidencia: “{{ $criterion['evidence'] }}”</p>
                                 @endif
+                                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">{{ $criterion['explanation'] }}</p>
                             </li>
                         @endforeach
                     </ul>
@@ -66,7 +66,13 @@
                             @forelse ($analysis['cv_information'][$section] as $item)
                                 <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">
                                     {{ $item['text'] }}
-                                    <span class="block text-xs text-gray-500">Evidencia: “{{ $item['evidence'] }}”</span>
+                                    @if ($item['evidence_valid'])
+                                        <span class="block text-xs text-gray-500">Evidencia: “{{ $item['evidence'] }}”</span>
+                                    @else
+                                        <span class="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
+                                            Sin evidencia verificable
+                                        </span>
+                                    @endif
                                 </p>
                             @empty
                                 <p class="mt-1 text-sm text-gray-500">No identificado en el documento.</p>
@@ -142,10 +148,16 @@
                         </div>
 
                         @foreach ($sectionLabels as $section => $label)
-                            @if ($analysis['adapted_cv'][$section])
+                            @php
+                                $verifiedItems = array_filter(
+                                    $analysis['adapted_cv'][$section],
+                                    fn ($item) => $item['evidence_valid'],
+                                );
+                            @endphp
+                            @if ($verifiedItems)
                                 <fieldset class="space-y-3">
                                     <legend class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ $label }}</legend>
-                                    @foreach ($analysis['adapted_cv'][$section] as $index => $item)
+                                    @foreach ($verifiedItems as $index => $item)
                                         <div>
                                             <label for="{{ $section }}-{{ $index }}" class="sr-only">{{ $label }} {{ $index + 1 }}</label>
                                             <textarea id="{{ $section }}-{{ $index }}" name="adapted_cv[{{ $section }}][{{ $index }}][text]" rows="2" required

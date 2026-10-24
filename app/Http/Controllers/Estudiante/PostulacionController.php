@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Estudiante;
 
+use App\Events\StudentAppliedToJob;
 use App\Http\Controllers\Controller;
 use App\Models\Vacante;
 use Illuminate\Http\Request;
@@ -10,14 +11,28 @@ use Illuminate\Support\Str;
 
 class PostulacionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $filters = $request->validate([
+            'buscar' => ['nullable', 'string', 'max:255'],
+            'estado' => ['nullable', 'in:recibida,en_revision,aceptada,rechazada'],
+        ]);
+        $filters = array_filter($filters, fn ($value) => filled($value));
+
         $postulaciones = auth()->user()->estudiante->postulaciones()
             ->with('vacante.empresa')
+            ->when($filters['buscar'] ?? null, function ($query, $buscar) {
+                $query->whereHas('vacante', fn ($vacante) => $vacante
+                    ->where('titulo', 'like', "%{$buscar}%")
+                    ->orWhereHas('empresa', fn ($empresa) => $empresa
+                        ->where('nombre_empresa', 'like', "%{$buscar}%")));
+            })
+            ->when($filters['estado'] ?? null, fn ($query, $estado) => $query->where('estado', $estado))
             ->latest()
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('estudiante.postulaciones.index', compact('postulaciones'));
+        return view('estudiante.postulaciones.index', compact('postulaciones', 'filters'));
     }
 
     public function store(Request $request, string $vacanteId)
@@ -59,12 +74,13 @@ class PostulacionController extends Controller
             );
         }
 
-        $vacante->postulaciones()->create([
+        $postulacion = $vacante->postulaciones()->create([
             'estudiante_id' => $estudiante->id,
             'carta_presentacion' => $request->carta_presentacion,
             'cv_path' => $cvPath,
             'estado' => 'recibida',
         ]);
+        StudentAppliedToJob::dispatch((int) $postulacion->getKey());
 
         return redirect()->route('estudiante.vacantes.show', $vacante)
             ->with('status', 'Te has postulado exitosamente.');

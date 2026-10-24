@@ -19,6 +19,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/feed', [\App\Http\Controllers\NotificationController::class, 'feed'])->name('notifications.feed');
+    Route::patch('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::patch('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markRead'])
+        ->whereUuid('notification')
+        ->name('notifications.read');
+    Route::get('/notifications/{notification}/open', [\App\Http\Controllers\NotificationController::class, 'open'])
+        ->whereUuid('notification')
+        ->name('notifications.open');
 });
 
 Route::middleware(['auth', 'rol:admin'])->prefix('admin')->name('admin.')->group(function () {

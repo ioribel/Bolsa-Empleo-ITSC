@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\JobVacancyPublished;
 use Illuminate\Database\Eloquent\Model;
 
 class Vacante extends Model
@@ -35,6 +36,7 @@ class Vacante extends Model
         }
 
         $this->update(['estado' => 'publicada']);
+        JobVacancyPublished::dispatch((int) $this->getKey());
     }
 
     public function cerrar(): void

@@ -67,7 +67,7 @@
                             Se omiten el nombre, correo y matrícula del perfil, además de teléfonos y correos detectados en el texto.
                             Google puede conservar solicitudes y respuestas hasta 55 días para monitoreo de abuso.
                         </div>
-                        <form method="POST" action="{{ route('estudiante.vacantes.analizar-cv', $vacante) }}" enctype="multipart/form-data" class="mt-4">
+                        <form id="cv-analysis-form" method="POST" action="{{ route('estudiante.vacantes.analizar-cv', $vacante) }}" enctype="multipart/form-data" class="mt-4">
                             @csrf
                             <label for="analysis-cv" class="block text-sm font-medium text-gray-800 dark:text-gray-200">
                                 PDF para este análisis ({{ $tieneCvPerfil ? 'opcional' : 'requerido' }}, máximo 2 MB)
@@ -83,6 +83,42 @@
                                 Analizar mi CV con IA
                             </button>
                         </form>
+                        <div id="cv-processing-modal" class="hidden" style="position: fixed; inset: 0; z-index: 1055; align-items: center; justify-content: center; background: rgba(17, 24, 39, .5); padding: 1rem;">
+                            <div class="w-full max-w-lg overflow-hidden rounded-lg border border-gray-200 bg-white text-gray-900 shadow-xl" style="margin: auto;" role="dialog" aria-modal="true" aria-labelledby="cv-processing-title" aria-describedby="cv-processing-message">
+                                <div class="border-b border-gray-200 px-5 py-4">
+                                    <h2 id="cv-processing-title" class="text-lg font-semibold">Analizando tu CV</h2>
+                                </div>
+                                <div class="flex items-center gap-4 px-5 py-5" aria-live="polite">
+                                    <span class="h-8 w-8 shrink-0 animate-spin rounded-full border-4 border-indigo-100 border-r-indigo-600 motion-reduce:animate-none" aria-hidden="true"></span>
+                                    <p id="cv-processing-message" class="m-0 text-sm text-gray-700">Estamos procesando el currículum con Gemini. Puede tardar unos segundos.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <script>
+                            const cvAnalysisForm = document.getElementById('cv-analysis-form');
+                            const cvProcessingModal = document.getElementById('cv-processing-modal');
+                            const cvAnalysisSubmit = cvAnalysisForm.querySelector('button[type="submit"]');
+                            document.body.appendChild(cvProcessingModal);
+
+                            cvAnalysisForm.addEventListener('submit', function (event) {
+                                if (!this.reportValidity()) {
+                                    event.preventDefault();
+                                    return;
+                                }
+
+                                this.setAttribute('aria-busy', 'true');
+                                cvAnalysisSubmit.disabled = true;
+                                cvProcessingModal.classList.remove('hidden');
+                                cvProcessingModal.style.display = 'flex';
+                            });
+
+                            window.addEventListener('pageshow', function () {
+                                cvProcessingModal.classList.add('hidden');
+                                cvProcessingModal.style.display = 'none';
+                                cvAnalysisForm.removeAttribute('aria-busy');
+                                cvAnalysisSubmit.disabled = false;
+                            });
+                        </script>
                     @endif
                 </section>
 

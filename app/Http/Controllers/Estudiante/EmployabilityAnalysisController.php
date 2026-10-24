@@ -40,7 +40,7 @@ class EmployabilityAnalysisController extends Controller
 
             if ($cvContents !== null) {
                 $cvSource = bin2hex(random_bytes(32));
-                Cache::put($this->uploadedCvCacheKey($estudiante->user_id, $cvSource), base64_encode($cvContents), now()->addMinutes(30));
+                Cache::store('file')->put($this->uploadedCvCacheKey($estudiante->user_id, $cvSource), base64_encode($cvContents), now()->addMinutes(30));
                 $analysis['cv_source'] = $cvSource;
             }
         } catch (CvExtractionException|EmployabilityAnalysisException $exception) {
@@ -78,7 +78,7 @@ class EmployabilityAnalysisController extends Controller
             if ($cvSource === null) {
                 $contents = $this->profileCvContents($estudiante->cv_path);
             } else {
-                $encodedContents = Cache::get($this->uploadedCvCacheKey($estudiante->user_id, $cvSource));
+                $encodedContents = Cache::store('file')->get($this->uploadedCvCacheKey($estudiante->user_id, $cvSource));
                 $contents = is_string($encodedContents) ? base64_decode($encodedContents, true) : false;
             }
 
@@ -102,7 +102,7 @@ class EmployabilityAnalysisController extends Controller
         ])->setPaper('a4')->download('cv-adaptado-vacante-'.$vacante->id.'.pdf');
 
         if ($cvSource !== null) {
-            Cache::forget($this->uploadedCvCacheKey($estudiante->user_id, $cvSource));
+            Cache::store('file')->forget($this->uploadedCvCacheKey($estudiante->user_id, $cvSource));
         }
 
         return $pdf->withHeaders(['Cache-Control' => 'private, no-store, max-age=0']);

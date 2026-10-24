@@ -33,10 +33,13 @@ class GeminiEmployabilityService
         ];
 
         $prompt = implode("\n\n", [
-            'Compara las evidencias del currículum con la vacante proporcionada.',
-            'No afirmes que una competencia falta; si no hay evidencia, deja la cita vacía.',
-            'Para cada requisito devuelve exactamente su id y una cita literal breve del CV, o una cadena vacía.',
-            'Toda afirmación sobre el CV debe incluir una o más citas literales del texto del CV.',
+            'Evalúa semánticamente cada requisito de la vacante frente a todo el contenido del CV; no te limites a buscar palabras idénticas.',
+            'Clasifica cada requisito como direct (la evidencia demuestra claramente el requisito), related (la evidencia es transferible o semánticamente similar, pero no demuestra todos sus aspectos) o none (no hay evidencia suficiente).',
+            'Ejemplo: “Organización y control de registros y documentos” es related con “Organización y atención a los detalles”: respalda organización y manejo documental, pero no prueba por sí sola atención al detalle.',
+            'Para direct o related, devuelve una cita literal breve y exacta del CV. Nunca inventes ni parafrasees la cita. Para none, deja la evidencia vacía.',
+            'Incluye una explicación breve en español para cada clasificación. En related, explica qué parte del requisito respalda la evidencia y qué parte no demuestra; no sobrestimes la coincidencia.',
+            'No afirmes que una competencia falta; none significa únicamente que no hay evidencia suficiente en este CV.',
+            'Para los datos del CV, devuelve una cita literal breve si puedes verificarla; si no puedes, conserva el dato como no verificado y deja evidence como cadena vacía. Nunca inventes citas.',
             'No añadas experiencia, títulos, certificaciones, habilidades, tecnologías, fechas ni resultados que no estén en las citas.',
             'Las recomendaciones deben referirse a cómo presentar mejor información real, no a fabricar información.',
             'Para la versión adaptada, reorganiza y mejora la redacción sin cambiar los hechos. Cada elemento debe incluir citas literales.',
@@ -136,8 +139,10 @@ class GeminiEmployabilityService
                         'properties' => [
                             'id' => ['type' => 'STRING'],
                             'cv_evidence' => ['type' => 'STRING'],
+                            'match' => ['type' => 'STRING', 'enum' => ['direct', 'related', 'none']],
+                            'explanation' => ['type' => 'STRING'],
                         ],
-                        'required' => ['id', 'cv_evidence'],
+                        'required' => ['id', 'cv_evidence', 'match', 'explanation'],
                     ],
                 ],
                 'recommendations' => [

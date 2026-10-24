@@ -44,9 +44,16 @@ class EmployabilityAnalysisService
         $suggestedProfile = $this->validateParagraph($raw['suggested_profile'] ?? null, $cvText);
         $adaptedCv = $this->validateAdaptedCv($raw['adapted_cv'] ?? null, $cvText);
 
-        $matchedCount = count(array_filter($criteriaResults, fn (array $item): bool => $item['matched']));
+        $weightedMatches = array_sum(array_map(
+            fn (array $item): float => match ($item['match']) {
+                'direct' => 1,
+                'related' => 0.5,
+                default => 0,
+            },
+            $criteriaResults,
+        ));
         $score = count($criteriaResults) > 0
-            ? round(($matchedCount / count($criteriaResults)) * 100, 1)
+            ? round(($weightedMatches / count($criteriaResults)) * 100, 1)
             : null;
 
         return [
@@ -61,7 +68,7 @@ class EmployabilityAnalysisService
             'criteria' => $criteriaResults,
             'not_identified' => array_values(array_filter(
                 $criteriaResults,
-                fn (array $item): bool => ! $item['matched'],
+                fn (array $item): bool => $item['match'] === 'none',
             )),
             'compatibility_percentage' => $score,
             'suggested_profile' => $suggestedProfile,
@@ -77,6 +84,13 @@ class EmployabilityAnalysisService
 
         if ($adapted['profile']['text'] === '') {
             throw new EmployabilityAnalysisException('El perfil profesional no puede quedar vacío.');
+        }
+
+        foreach (self::CV_SECTIONS as $section) {
+            $adapted[$section] = array_values(array_map(
+                fn (array $item): array => ['text' => $item['text'], 'evidence' => $item['evidence']],
+                array_filter($adapted[$section], fn (array $item): bool => $item['evidence_valid']),
+            ));
         }
 
         return $adapted;
@@ -123,10 +137,18 @@ class EmployabilityAnalysisService
                 || ! is_string($item['id'] ?? null)
                 || ! is_string($item['cv_evidence'] ?? null)
                 || mb_strlen($item['cv_evidence']) > 500
+                || ! in_array($item['match'] ?? null, ['direct', 'related', 'none'], true)
+                || ! is_string($item['explanation'] ?? null)
+                || trim($item['explanation']) === ''
+                || mb_strlen($item['explanation']) > 500
                 || array_key_exists($item['id'], $byId)) {
                 throw new EmployabilityAnalysisException('Gemini devolvió criterios de comparación inválidos.');
             }
-            $byId[$item['id']] = $item['cv_evidence'];
+            $byId[$item['id']] = [
+                'evidence' => trim($item['cv_evidence']),
+                'match' => $item['match'],
+                'explanation' => trim($item['explanation']),
+            ];
         }
 
         $results = [];
@@ -135,17 +157,21 @@ class EmployabilityAnalysisService
                 throw new EmployabilityAnalysisException('Gemini omitió un criterio de la vacante.');
             }
 
-            $evidence = trim($byId[$criterion['id']]);
+            $result = $byId[$criterion['id']];
+            $evidence = $result['evidence'];
             if ($evidence !== '') {
                 $this->assertEvidence($evidence, $cvText);
             }
-            $matched = $evidence !== '' && $this->evidenceMatchesCriterion($evidence, $criterion['text']);
+            $match = $evidence === '' ? 'none' : $result['match'];
+            $matched = $match !== 'none';
 
             $results[] = [
                 'id' => $criterion['id'],
                 'requirement' => $criterion['text'],
                 'evidence' => $matched ? $evidence : '',
+                'match' => $match,
                 'matched' => $matched,
+                'explanation' => $result['explanation'],
             ];
         }
 
@@ -242,25 +268,34 @@ class EmployabilityAnalysisService
         foreach ($items as $item) {
             if (! is_array($item)
                 || ! is_string($item['text'] ?? null)
-                || ! is_string($item['evidence'] ?? null)
                 || trim($item['text']) === ''
-                || mb_strlen($item['text']) > 1500
-                || mb_strlen($item['evidence']) > 500) {
-                throw new EmployabilityAnalysisException('Gemini devolvió un dato del currículum sin evidencia válida.');
+                || mb_strlen($item['text']) > 1500) {
+                throw new EmployabilityAnalysisException('Gemini devolvió un dato del currículum en un formato inválido.');
             }
 
             $text = trim($item['text']);
-            $evidence = trim($item['evidence']);
-            $this->assertEvidence($evidence, $cvText);
-            $results[] = ['text' => $text, 'evidence' => $evidence];
+            $evidence = is_string($item['evidence'] ?? null) && mb_strlen($item['evidence']) <= 500
+                ? trim($item['evidence'])
+                : '';
+            $evidenceValid = $this->hasValidEvidence($evidence, $cvText);
+            $results[] = [
+                'text' => $text,
+                'evidence' => $evidenceValid ? $evidence : '',
+                'evidence_valid' => $evidenceValid,
+            ];
         }
 
         return $results;
     }
 
+    private function hasValidEvidence(string $evidence, string $source): bool
+    {
+        return $evidence !== '' && str_contains($this->normalize($source), $this->normalize($evidence));
+    }
+
     private function assertEvidence(string $evidence, string $source): void
     {
-        if ($evidence === '' || ! str_contains($this->normalize($source), $this->normalize($evidence))) {
+        if (! $this->hasValidEvidence($evidence, $source)) {
             throw new EmployabilityAnalysisException('Gemini devolvió una afirmación que no se pudo verificar en el documento.');
         }
     }
@@ -270,34 +305,6 @@ class EmployabilityAnalysisService
         $text = preg_replace('/\s+/u', ' ', mb_strtolower($text));
 
         return trim($text);
-    }
-
-    private function evidenceMatchesCriterion(string $evidence, string $criterion): bool
-    {
-        $stopWords = [
-            'a', 'al', 'con', 'de', 'del', 'el', 'en', 'la', 'las', 'los', 'o', 'para', 'por', 'un', 'una', 'y',
-            'experiencia', 'conocimiento', 'conocimientos', 'manejo', 'habilidad', 'habilidades', 'capacidad',
-            'dominio', 'requisito', 'requisitos', 'trabajo',
-        ];
-        $keywords = array_values(array_diff($this->words($criterion), $stopWords));
-        $evidenceWords = $this->words($evidence);
-
-        if ($keywords === []) {
-            return false;
-        }
-
-        $matchedCount = count(array_intersect($keywords, $evidenceWords));
-
-        return $matchedCount >= (int) ceil(count($keywords) / 2);
-    }
-
-    private function words(string $text): array
-    {
-        $normalized = mb_strtolower($text);
-        $normalized = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $normalized);
-        preg_match_all('/[a-z0-9]+/', $normalized, $matches);
-
-        return array_values(array_unique($matches[0]));
     }
 
     private function vacancyEvidenceText(Vacante $vacante): string

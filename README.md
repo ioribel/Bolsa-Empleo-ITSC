@@ -6,7 +6,7 @@ Proyecto final de la asignatura **SOF-113 - PROYECTO FINAL**.
 
 ## Stack tecnológico
 
-- **Backend:** PHP 8.2 + Laravel 11
+- **Backend:** PHP 8.2 + Laravel 12
 - **Base de datos:** MySQL
 - **Autenticación:** Laravel Breeze
 - **Frontend:** Blade + Tailwind CSS + Alpine.js
@@ -31,6 +31,7 @@ Proyecto final de la asignatura **SOF-113 - PROYECTO FINAL**.
 - Gestión de usuarios (bloqueo/activación) y catálogo de carreras por el administrador.
 - Roles y permisos aplicados por middleware en cada grupo de rutas.
 - Asistente de empleabilidad con análisis puntual del CV y generación de una versión adaptada en PDF.
+- Notificaciones internas para nuevas postulaciones, vacantes publicadas y cambios finales en postulaciones.
 
 ## Asistente Inteligente de Empleabilidad
 
@@ -49,7 +50,20 @@ La extracción se realiza localmente y admite PDF con texto seleccionable de has
 
 ## Modelo de datos
 
-El módulo reutiliza las tablas existentes y añade únicamente `cv_original_name` a `estudiantes` para mostrar el nombre del archivo. No guarda análisis ni crea una tabla de historial.
+La aplicación reutiliza las tablas existentes y añade `cv_original_name` a `estudiantes` para mostrar el nombre del archivo. El sistema de notificaciones utiliza la tabla estándar de Laravel `notifications` y `notification_deliveries` para evitar duplicados ante reintentos de cola. Los análisis de empleabilidad no se almacenan como historial.
+
+## Notificaciones
+
+La campanita compartida aparece para estudiantes, empresas y administradores. Las notificaciones persistidas se consultan exclusivamente desde la cuenta autenticada; se muestran las más recientes y la campana consulta cambios cada 30 segundos mientras la pestaña está visible. Al abrir una notificación, el servidor comprueba nuevamente la pertenencia y disponibilidad del recurso antes de marcarla como leída y redirigir.
+
+Los eventos de postulación, publicación de vacantes y cambios de estado finales se despachan después del commit. Los listeners usan la cola configurada en `.env`; en desarrollo se puede iniciar con:
+
+```bash
+php artisan migrate
+php artisan queue:work --tries=3
+```
+
+El comando `composer dev` también inicia un worker de cola. En producción, configura un supervisor o servicio equivalente para mantener `queue:work` en ejecución y ejecuta las migraciones como parte del despliegue. La actualización usa polling para evitar requerir WebSockets, Reverb o servicios adicionales. Los eventos de administrador no generan notificaciones en esta versión; la campana se comparte y muestra el estado vacío hasta definir eventos administrativos.
 
 ## Instalación local
 

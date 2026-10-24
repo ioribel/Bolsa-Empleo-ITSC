@@ -42,8 +42,12 @@ class EmployabilityAnalysisTest extends TestCase
 
         $response->assertOk()
             ->assertSee('50.0%')
+            ->assertSee('Coincidencia directa')
             ->assertSee('No identificado en el CV')
             ->assertSee('Descargar CV adaptado en PDF');
+        $analysis = $response->viewData('analysis');
+        $this->assertSame('direct', $analysis['criteria'][0]['match']);
+        $this->assertSame('none', $analysis['criteria'][1]['match']);
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
 
         Http::assertSent(function (ClientRequest $request) use ($studentUser, $student): bool {
@@ -71,6 +75,18 @@ class EmployabilityAnalysisTest extends TestCase
             ->assertSessionHasErrors('consent');
 
         Http::assertNothingSent();
+    }
+
+    public function test_cv_processing_modal_is_hidden_when_vacancy_page_loads(): void
+    {
+        [$studentUser, , $vacancy] = $this->createContext();
+
+        $this->actingAs($studentUser)
+            ->get(route('estudiante.vacantes.show', $vacancy))
+            ->assertOk()
+            ->assertSee('id="cv-processing-modal"', false)
+            ->assertSee('id="cv-processing-modal" class="hidden"', false)
+            ->assertSee('align-items: center; justify-content: center;', false);
     }
 
     public function test_analysis_can_read_existing_cv_stored_on_the_legacy_public_disk(): void
@@ -120,7 +136,7 @@ class EmployabilityAnalysisTest extends TestCase
         $this->assertMatchesRegularExpression('/\A[a-f0-9]{64}\z/', $analysis['cv_source']);
         $this->assertSame(
             base64_encode($uploadedPdf),
-            Cache::get('cv-analysis:'.$student->user_id.':'.$analysis['cv_source']),
+            Cache::store('file')->get('cv-analysis:'.$student->user_id.':'.$analysis['cv_source']),
         );
         $this->assertSame($profilePdf, Storage::disk('local')->get($student->cv_path));
         Http::assertSent(function (ClientRequest $request): bool {
@@ -152,21 +168,105 @@ class EmployabilityAnalysisTest extends TestCase
         $downloadResponse->assertOk()->assertHeader('content-type', 'application/pdf');
     }
 
-    public function test_invalid_ai_evidence_is_rejected_instead_of_presented_as_a_result(): void
+    public function test_analysis_shows_cv_items_without_valid_evidence_as_unverified(): void
     {
         $payload = $this->geminiPayload();
-        $payload['cv_information']['skills'][0]['evidence'] = 'C++ experto';
+        unset($payload['cv_information']['skills'][0]['evidence']);
         Http::fake(['generativelanguage.googleapis.com/*' => Http::response($this->wrapGemini($payload), 200)]);
         Storage::fake('local');
         [$studentUser, $student, $vacancy] = $this->createContext();
         $student->update(['cv_path' => 'cvs/perfiles/cv.pdf']);
         Storage::disk('local')->put($student->cv_path, $this->pdfWithText('PHP Laravel desarrollo de software'));
 
-        $this->actingAs($studentUser)
-            ->from(route('estudiante.vacantes.show', $vacancy))
+        $response = $this->actingAs($studentUser)
             ->post(route('estudiante.vacantes.analizar-cv', $vacancy), ['consent' => '1'])
-            ->assertRedirect(route('estudiante.vacantes.show', $vacancy))
-            ->assertSessionHas('error', 'Gemini devolvió una afirmación que no se pudo verificar en el documento.');
+            ->assertOk()
+            ->assertSee('Sin evidencia verificable')
+            ->assertSee('PHP y Laravel');
+
+        $analysis = $response->viewData('analysis');
+        $this->assertFalse($analysis['cv_information']['skills'][0]['evidence_valid']);
+        $this->assertSame('', $analysis['cv_information']['skills'][0]['evidence']);
+    }
+
+    public function test_semantically_related_skill_is_returned_as_partial_match(): void
+    {
+        config([
+            'services.gemini.key' => 'fake-test-key',
+            'services.gemini.model' => 'gemini-2.5-flash',
+        ]);
+        $payload = $this->geminiPayload();
+        $payload['criteria'] = [[
+            'id' => 'R1',
+            'cv_evidence' => 'Organización y control de registros y documentos',
+            'match' => 'related',
+            'explanation' => 'La evidencia respalda la organización y el manejo documental, pero no demuestra explícitamente la atención al detalle.',
+        ]];
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::response($this->wrapGemini($payload), 200)]);
+        Storage::fake('local');
+        [$studentUser, $student, $vacancy] = $this->createContext();
+        $vacancy->update(['requisitos' => 'Organización y atención a los detalles.']);
+        $student->update(['cv_path' => 'cvs/perfiles/cv.pdf']);
+        Storage::disk('local')->put(
+            $student->cv_path,
+            $this->pdfWithText('Organización y control de registros y documentos. PHP Laravel'),
+        );
+
+        $response = $this->actingAs($studentUser)->post(
+            route('estudiante.vacantes.analizar-cv', $vacancy),
+            ['consent' => '1'],
+        );
+
+        $response->assertOk()
+            ->assertSee('Coincidencia relacionada')
+            ->assertSee('La evidencia respalda la organización', false)
+            ->assertSee('50.0%');
+        $analysis = $response->viewData('analysis');
+        $this->assertSame('related', $analysis['criteria'][0]['match']);
+        $this->assertSame('Organización y control de registros y documentos', $analysis['criteria'][0]['evidence']);
+        $this->assertSame(50.0, $analysis['compatibility_percentage']);
+    }
+
+    public function test_adapted_cv_excludes_items_without_valid_evidence(): void
+    {
+        $payload = $this->geminiPayload();
+        $payload['adapted_cv']['skills'][0]['evidence'] = 'C++ experto';
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::response($this->wrapGemini($payload), 200)]);
+        Storage::fake('local');
+        [$studentUser, $student, $vacancy] = $this->createContext();
+        $cvContents = $this->pdfWithText('PHP Laravel desarrollo de software');
+        $student->update(['cv_path' => 'cvs/perfiles/cv.pdf']);
+        Storage::disk('local')->put($student->cv_path, $cvContents);
+
+        $analysisResponse = $this->actingAs($studentUser)->post(
+            route('estudiante.vacantes.analizar-cv', $vacancy),
+            ['consent' => '1'],
+        );
+        $analysisResponse->assertOk();
+        $analysis = $analysisResponse->viewData('analysis');
+        $this->assertFalse($analysis['adapted_cv']['skills'][0]['evidence_valid']);
+        $analysisResponse->assertDontSee('name="adapted_cv[skills][0][text]"', false);
+
+        $downloadResponse = $this->post(
+            route('estudiante.vacantes.cv-adaptado', $vacancy),
+            [
+                'consent_confirmed' => '1',
+                'cv_fingerprint' => hash('sha256', $cvContents),
+                'adapted_cv' => [
+                    'profile' => [
+                        'text' => 'Conocimientos de PHP y Laravel.',
+                        'evidence' => ['PHP Laravel'],
+                    ],
+                    'skills' => [
+                        ['text' => 'Experto en C++', 'evidence' => 'C++ experto'],
+                    ],
+                ],
+            ],
+        );
+
+        $downloadResponse->assertOk()->assertHeader('content-type', 'application/pdf');
+        $pdfText = (new \Smalot\PdfParser\Parser)->parseContent($downloadResponse->getContent())->getText();
+        $this->assertStringNotContainsString('Experto en C++', $pdfText);
     }
 
     public function test_gemini_rate_limit_is_reported_without_showing_provider_response(): void
@@ -305,8 +405,18 @@ class EmployabilityAnalysisTest extends TestCase
                 'technologies' => [['text' => 'PHP y Laravel', 'evidence' => 'PHP Laravel']],
             ],
             'criteria' => [
-                ['id' => 'R1', 'cv_evidence' => 'PHP Laravel'],
-                ['id' => 'R2', 'cv_evidence' => 'PHP Laravel'],
+                [
+                    'id' => 'R1',
+                    'cv_evidence' => 'PHP Laravel',
+                    'match' => 'direct',
+                    'explanation' => 'El CV menciona explícitamente PHP y Laravel.',
+                ],
+                [
+                    'id' => 'R2',
+                    'cv_evidence' => '',
+                    'match' => 'none',
+                    'explanation' => 'No se encontró evidencia suficiente para este requisito.',
+                ],
             ],
             'recommendations' => [
                 ['text' => 'Destaca los conocimientos técnicos en una sección visible.', 'source' => 'cv', 'evidence' => 'PHP Laravel'],

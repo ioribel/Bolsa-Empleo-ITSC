@@ -169,6 +169,43 @@ class StudentCvTest extends TestCase
             ->assertOk();
     }
 
+    public function test_student_can_filter_applications_by_vacancy_and_status(): void
+    {
+        Storage::fake('local');
+        [$studentUser, $student, $vacancy] = $this->createApplicationContext();
+        $vacancy->postulaciones()->create([
+            'estudiante_id' => $student->id,
+            'estado' => 'recibida',
+        ]);
+
+        $secondVacancy = Vacante::create([
+            'empresa_id' => $vacancy->empresa_id,
+            'titulo' => 'Asistente Administrativo',
+            'descripcion' => 'Apoyo administrativo',
+            'tipo_empleo' => 'medio_tiempo',
+            'modalidad' => 'remoto',
+            'estado' => 'publicada',
+        ]);
+        $secondVacancy->carreras()->attach($student->carrera_id);
+        $secondVacancy->postulaciones()->create([
+            'estudiante_id' => $student->id,
+            'estado' => 'en_revision',
+        ]);
+
+        $this->actingAs($studentUser)
+            ->get(route('estudiante.postulaciones.index', ['buscar' => 'Desarrollador']))
+            ->assertOk()
+            ->assertSee('Desarrollador de prueba')
+            ->assertDontSee('Asistente Administrativo')
+            ->assertSee('1 postulación');
+
+        $this->get(route('estudiante.postulaciones.index', ['estado' => 'en_revision']))
+            ->assertOk()
+            ->assertSee('Asistente Administrativo')
+            ->assertDontSee('Desarrollador de prueba')
+            ->assertSee('1 postulación');
+    }
+
     public function test_student_must_attach_a_cv_when_the_profile_has_none(): void
     {
         [$studentUser, , $vacante] = $this->createApplicationContext();

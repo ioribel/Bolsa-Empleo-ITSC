@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\ApplicationStatusChanged;
 use Illuminate\Database\Eloquent\Model;
 
 class Postulacion extends Model
@@ -27,7 +28,9 @@ class Postulacion extends Model
             throw new \RuntimeException('Solo una postulación recibida puede pasar a revisión.');
         }
 
+        $previousStatus = $this->estado;
         $this->update(['estado' => 'en_revision']);
+        ApplicationStatusChanged::dispatch((int) $this->getKey(), $previousStatus, 'en_revision');
     }
 
     public function aceptar(): void
@@ -36,7 +39,9 @@ class Postulacion extends Model
             throw new \RuntimeException('Solo una postulación en revisión puede aceptarse.');
         }
 
+        $previousStatus = $this->estado;
         $this->update(['estado' => 'aceptada']);
+        ApplicationStatusChanged::dispatch((int) $this->getKey(), $previousStatus, 'aceptada');
     }
 
     public function rechazar(): void
@@ -45,6 +50,8 @@ class Postulacion extends Model
             throw new \RuntimeException('Esta postulación ya no puede rechazarse.');
         }
 
+        $previousStatus = $this->estado;
         $this->update(['estado' => 'rechazada']);
+        ApplicationStatusChanged::dispatch((int) $this->getKey(), $previousStatus, 'rechazada');
     }
 }

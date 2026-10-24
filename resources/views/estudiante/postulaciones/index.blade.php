@@ -7,6 +7,36 @@
 
     <div class="py-6 sm:py-12">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <section class="mb-6 rounded-lg bg-white p-5 shadow-sm dark:bg-gray-800 sm:p-6">
+                <form method="GET" action="{{ route('estudiante.postulaciones.index') }}" class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <label class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                        Buscar
+                        <input type="search" name="buscar" value="{{ $filters['buscar'] ?? '' }}" placeholder="Vacante o empresa"
+                            class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                    </label>
+                    <label class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                        Estado
+                        <select name="estado" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                            <option value="">Todos los estados</option>
+                            <option value="recibida" @selected(($filters['estado'] ?? '') === 'recibida')>Recibida</option>
+                            <option value="en_revision" @selected(($filters['estado'] ?? '') === 'en_revision')>En revisión</option>
+                            <option value="aceptada" @selected(($filters['estado'] ?? '') === 'aceptada')>Aceptada</option>
+                            <option value="rechazada" @selected(($filters['estado'] ?? '') === 'rechazada')>Rechazada</option>
+                        </select>
+                    </label>
+                    <div class="flex items-end gap-3">
+                        <button type="submit" class="inline-flex min-h-10 items-center rounded-md bg-blue-700 px-4 text-sm font-semibold text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Filtrar</button>
+                        <a href="{{ route('estudiante.postulaciones.index') }}" class="inline-flex min-h-10 items-center text-sm font-medium text-gray-900 hover:underline dark:text-gray-300">Limpiar</a>
+                    </div>
+                </form>
+                @if ($errors->any())
+                    <p class="mt-3 text-sm text-red-600">Revisa los filtros seleccionados e inténtalo de nuevo.</p>
+                @endif
+            </section>
+
+            <p class="mb-3 text-sm text-gray-600 dark:text-gray-400">
+                {{ $postulaciones->total() }} {{ $postulaciones->total() === 1 ? 'postulación' : 'postulaciones' }}
+            </p>
             <div class="space-y-3 lg:hidden">
                 @forelse ($postulaciones as $p)
                     <article class="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800">
@@ -31,7 +61,7 @@
                     </article>
                 @empty
                     <p class="rounded-lg bg-white p-6 text-center text-sm text-gray-500 shadow-sm dark:bg-gray-800 dark:text-gray-400">
-                        Todavía no te has postulado a ninguna vacante.
+                        {{ count($filters) ? 'No se encontraron postulaciones con esos filtros.' : 'Todavía no te has postulado a ninguna vacante.' }}
                     </p>
                 @endforelse
             </div>
@@ -64,12 +94,15 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-8 text-center text-gray-500">Todavía no te has postulado a ninguna vacante.</td>
+                                <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                    {{ count($filters) ? 'No se encontraron postulaciones con esos filtros.' : 'Todavía no te has postulado a ninguna vacante.' }}
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
+            <div class="mt-4">{{ $postulaciones->links() }}</div>
         </div>
     </div>
 </x-app-layout>
