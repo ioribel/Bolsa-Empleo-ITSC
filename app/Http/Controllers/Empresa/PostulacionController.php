@@ -13,7 +13,15 @@ class PostulacionController extends Controller
         $vacante = auth()->user()->empresa->vacantes()->findOrFail($vacanteId);
 
         $postulaciones = $vacante->postulaciones()
-            ->with('estudiante.user', 'estudiante.carrera')
+            ->with([
+                'estudiante.user',
+                'estudiante.carrera',
+                'estudiante.formaciones',
+                'estudiante.experiencias',
+                'estudiante.habilidades',
+                'estudiante.idiomas',
+                'estudiante.certificaciones',
+            ])
             ->latest()
             ->get();
 

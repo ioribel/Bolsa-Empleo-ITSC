@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Events\StudentAppliedToJob;
 use App\Events\ApplicationStatusChanged;
+use App\Events\CompanySubmittedForApproval;
+use App\Events\JobVacancyPublished;
 use App\Models\Carrera;
 use App\Models\Empresa;
 use App\Models\Estudiante;
@@ -97,7 +99,94 @@ class NotificationSystemTest extends TestCase
 
         $vacancy->publicar();
 
-        Queue::assertPushed(\Illuminate\Events\CallQueuedListener::class, 1);
+        Queue::assertPushed(\Illuminate\Events\CallQueuedListener::class, 2);
+    }
+
+    public function test_publishing_vacancy_notifies_all_admins_once_independently_of_targeted_careers(): void
+    {
+        config(['queue.default' => 'sync']);
+        [$studentUser, , $vacancy] = $this->createContext();
+        $vacancy->carreras()->detach();
+        $firstAdmin = User::factory()->create(['rol' => 'admin']);
+        $secondAdmin = User::factory()->create(['rol' => 'admin']);
+
+        $vacancy->publicar();
+
+        foreach ([$firstAdmin, $secondAdmin] as $admin) {
+            $notification = $admin->notifications()->sole();
+            $this->assertSame('admin.vacancy.published', $notification->data['event']);
+            $this->assertSame($vacancy->id, $notification->data['vacancy_id']);
+        }
+        $this->assertSame(0, $studentUser->notifications()->count());
+
+        JobVacancyPublished::dispatch((int) $vacancy->id);
+
+        $this->assertSame(1, $firstAdmin->notifications()->count());
+        $this->assertSame(1, $secondAdmin->notifications()->count());
+    }
+
+    public function test_company_registration_notifies_all_admins_and_is_idempotent(): void
+    {
+        config(['queue.default' => 'sync']);
+        $firstAdmin = User::factory()->create(['rol' => 'admin']);
+        $secondAdmin = User::factory()->create(['rol' => 'admin']);
+        $student = User::factory()->create(['rol' => 'estudiante']);
+
+        $this->post('/register/empresa', [
+            'name' => 'Empresa User',
+            'email' => 'nueva-empresa@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'nombre_empresa' => 'Empresa Pendiente',
+            'rnc' => 'RNC-PENDIENTE-001',
+        ])->assertRedirect(route('login'));
+
+        $company = Empresa::query()->where('rnc', 'RNC-PENDIENTE-001')->sole();
+        foreach ([$firstAdmin, $secondAdmin] as $admin) {
+            $notification = $admin->notifications()->sole();
+            $this->assertSame('admin.company.pending', $notification->data['event']);
+            $this->assertSame($company->id, $notification->data['company_id']);
+        }
+        $this->assertSame(0, $student->notifications()->count());
+
+        CompanySubmittedForApproval::dispatch((int) $company->id);
+
+        $this->assertSame(1, $firstAdmin->notifications()->count());
+        $this->assertSame(1, $secondAdmin->notifications()->count());
+    }
+
+    public function test_admin_notification_links_lead_to_relevant_admin_lists(): void
+    {
+        [$studentUser, , $vacancy] = $this->createContext();
+        $admin = User::factory()->create(['rol' => 'admin']);
+        $vacancy->publicar();
+
+        $vacancyNotification = $admin->notifications()
+            ->where('data->event', 'admin.vacancy.published')
+            ->sole();
+        $this->actingAs($admin)
+            ->get(route('notifications.open', $vacancyNotification))
+            ->assertRedirect(route('admin.vacantes.index', ['buscar' => $vacancy->titulo]));
+
+        $company = Empresa::create([
+            'user_id' => User::factory()->create(['rol' => 'empresa'])->id,
+            'nombre_empresa' => 'Por aprobar',
+            'rnc' => 'RNC-POR-APROBAR',
+            'estado' => 'pendiente',
+        ]);
+        CompanySubmittedForApproval::dispatch((int) $company->id);
+        $companyNotification = $admin->notifications()
+            ->where('data->event', 'admin.company.pending')
+            ->sole();
+
+        $this->get(route('notifications.open', $companyNotification))
+            ->assertRedirect(route('admin.empresas.index', [
+                'estado' => 'pendiente',
+                'buscar' => $company->nombre_empresa,
+            ]));
+
+        $studentNotification = $studentUser->notifications()->sole();
+        $this->assertSame('vacancy.published', $studentNotification->data['event']);
     }
 
     public function test_approval_and_rejection_notify_only_the_applicant_after_status_change(): void
@@ -227,6 +316,29 @@ class NotificationSystemTest extends TestCase
 
         Queue::assertNothingPushed();
         $this->assertSame(0, $studentUser->notifications()->count());
+    }
+
+    public function test_pending_company_event_inside_rolled_back_transaction_does_not_enqueue_notification(): void
+    {
+        Queue::fake();
+
+        try {
+            DB::transaction(function (): void {
+                $user = User::factory()->create(['rol' => 'empresa']);
+                $company = Empresa::create([
+                    'user_id' => $user->id,
+                    'nombre_empresa' => 'Registro revertido',
+                    'rnc' => 'RNC-ROLLBACK-001',
+                    'estado' => 'pendiente',
+                ]);
+                CompanySubmittedForApproval::dispatch((int) $company->id);
+                throw new \RuntimeException('Rollback test');
+            });
+        } catch (\RuntimeException $exception) {
+            $this->assertSame('Rollback test', $exception->getMessage());
+        }
+
+        Queue::assertNothingPushed();
     }
 
     private function createContext(): array

@@ -3,14 +3,27 @@
 namespace App\Http\Controllers\Estudiante;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\Estudiante\UpdateStudentProfileRequest;
+use App\Models\Estudiante;
+use App\Models\Habilidad;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 
 class PerfilController extends Controller
 {
     public function edit()
     {
-        $estudiante = auth()->user()->estudiante;
+        $estudiante = $this->student();
+        $estudiante->load([
+            'formaciones' => fn ($query) => $query->orderByDesc('fecha_inicio'),
+            'experiencias' => fn ($query) => $query->orderByDesc('fecha_inicio'),
+            'habilidades' => fn ($query) => $query->orderBy('nombre'),
+            'idiomas' => fn ($query) => $query->orderBy('idioma'),
+            'certificaciones' => fn ($query) => $query->orderByDesc('fecha_emision'),
+            'carrera',
+            'user',
+        ]);
+        $catalogoHabilidades = Habilidad::query()->orderBy('nombre')->get(['id', 'nombre', 'tipo']);
         $cvDetails = null;
 
         if ($estudiante->cv_path) {
@@ -26,12 +39,12 @@ class PerfilController extends Controller
             }
         }
 
-        return view('estudiante.perfil.edit', compact('estudiante', 'cvDetails'));
+        return view('estudiante.perfil.edit', compact('estudiante', 'cvDetails', 'catalogoHabilidades'));
     }
 
     public function cv()
     {
-        $estudiante = auth()->user()->estudiante;
+        $estudiante = $this->student();
         abort_unless($estudiante->cv_path, 404);
 
         foreach (['local', 'public'] as $disk) {
@@ -45,18 +58,13 @@ class PerfilController extends Controller
         abort(404);
     }
 
-    public function update(Request $request)
+    public function update(UpdateStudentProfileRequest $request)
     {
-        $estudiante = auth()->user()->estudiante;
-
-        $request->validate([
-            'telefono' => ['nullable', 'string', 'max:20'],
-            'resumen' => ['nullable', 'string', 'max:1000'],
-            'cv' => ['nullable', 'file', 'mimes:pdf', 'max:2048'],
-        ]);
-
-        $estudiante->telefono = $request->telefono;
-        $estudiante->resumen = $request->resumen;
+        $estudiante = $this->student();
+        $data = $request->validated();
+        $estudiante->fill(Arr::only($data, [
+            'telefono', 'resumen', 'titular', 'linkedin_url', 'github_url', 'portafolio_url',
+        ]));
 
         if ($request->hasFile('cv')) {
             $previousCvPath = $estudiante->cv_path;
@@ -86,7 +94,7 @@ class PerfilController extends Controller
 
     public function destroyCv()
     {
-        $estudiante = auth()->user()->estudiante;
+        $estudiante = $this->student();
 
         if ($estudiante->cv_path) {
             foreach (['local', 'public'] as $disk) {
@@ -111,5 +119,13 @@ class PerfilController extends Controller
         $name = preg_replace('/[\x00-\x1F\x7F]/u', '', $name);
 
         return mb_substr(trim($name) ?: 'curriculum.pdf', 0, 255);
+    }
+
+    private function student(): Estudiante
+    {
+        $student = auth()->user()?->estudiante;
+        abort_if(! $student, 403, 'No existe un perfil de estudiante para esta cuenta.');
+
+        return $student;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Empresa;
 use App\Models\Vacante;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -83,6 +84,31 @@ class NotificationController extends Controller
     private function destination(User $user, DatabaseNotification $notification): string
     {
         $data = $notification->data;
+
+        if (($data['event'] ?? null) === 'admin.vacancy.published' && $user->rol === 'admin') {
+            $vacancy = Vacante::query()
+                ->where('estado', 'publicada')
+                ->find($data['vacancy_id'] ?? null);
+
+            if ($vacancy) {
+                return route('admin.vacantes.index', ['buscar' => $vacancy->titulo]);
+            }
+        }
+
+        if (($data['event'] ?? null) === 'admin.company.pending' && $user->rol === 'admin') {
+            $company = Empresa::query()
+                ->where('estado', 'pendiente')
+                ->find($data['company_id'] ?? null);
+
+            if ($company) {
+                return route('admin.empresas.index', [
+                    'estado' => 'pendiente',
+                    'buscar' => $company->nombre_empresa,
+                ]);
+            }
+
+            return route('admin.empresas.index', ['estado' => 'pendiente']);
+        }
 
         if (($data['event'] ?? null) === 'vacancy.published' && $user->estudiante) {
             $vacancy = Vacante::query()

@@ -52,6 +52,99 @@
                             <p class="mt-3 break-words text-sm text-gray-600 dark:text-gray-300">{{ $p->estudiante->resumen }}</p>
                         @endif
 
+                        <section class="mt-4 rounded-md border border-gray-200 p-3 dark:border-gray-700">
+                            <h4 class="font-semibold text-gray-900 dark:text-gray-100">Perfil profesional</h4>
+                            @if ($p->estudiante->titular)
+                                <p class="mt-2 break-words text-sm font-medium">{{ $p->estudiante->titular }}</p>
+                            @endif
+                            <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                @if ($p->estudiante->formaciones->isNotEmpty())
+                                    <div>
+                                        <h5 class="text-sm font-semibold">Formación</h5>
+                                        <ul class="mt-1 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+                                            @foreach ($p->estudiante->formaciones as $formacion)
+                                                <li class="break-words">
+                                                    {{ $formacion->titulo }} · {{ $formacion->institucion }} ({{ ucfirst($formacion->nivel) }})
+                                                    @if ($formacion->campo_estudio) · {{ $formacion->campo_estudio }} @endif
+                                                    <span class="text-xs">· {{ $formacion->fecha_inicio->format('m/Y') }} – {{ $formacion->en_curso ? 'Actualidad' : ($formacion->fecha_fin?->format('m/Y') ?? 'Sin fecha de fin') }}</span>
+                                                    @if ($formacion->descripcion)<span class="block">{{ $formacion->descripcion }}</span>@endif
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+                                @if ($p->estudiante->experiencias->isNotEmpty())
+                                    <div>
+                                        <h5 class="text-sm font-semibold">Experiencia</h5>
+                                        <ul class="mt-1 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+                                            @foreach ($p->estudiante->experiencias as $experiencia)
+                                                <li class="break-words">
+                                                    {{ $experiencia->cargo }} · {{ $experiencia->empresa }} ({{ ucfirst($experiencia->tipo) }})
+                                                    <span class="text-xs">· {{ $experiencia->fecha_inicio->format('m/Y') }} – {{ $experiencia->actual ? 'Actualidad' : ($experiencia->fecha_fin?->format('m/Y') ?? 'Sin fecha de fin') }}</span>
+                                                    @if ($experiencia->descripcion)<span class="block">{{ $experiencia->descripcion }}</span>@endif
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+                                @if ($p->estudiante->habilidades->isNotEmpty())
+                                    <div>
+                                        <h5 class="text-sm font-semibold">Habilidades</h5>
+                                        <ul class="mt-1 flex flex-wrap gap-2 text-sm">
+                                            @foreach ($p->estudiante->habilidades as $habilidad)
+                                                <li class="max-w-full break-words rounded-full bg-blue-50 px-2 py-1 text-blue-900 dark:bg-blue-950 dark:text-blue-100">
+                                                    {{ $habilidad->nombre }} · {{ ucfirst($habilidad->pivot->nivel) }}
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+                                @if ($p->estudiante->idiomas->isNotEmpty())
+                                    <div>
+                                        <h5 class="text-sm font-semibold">Idiomas</h5>
+                                        <ul class="mt-1 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+                                            @foreach ($p->estudiante->idiomas as $idioma)
+                                                <li>{{ ucfirst($idioma->idioma) }} · {{ ucfirst($idioma->nivel) }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+                                @if ($p->estudiante->certificaciones->isNotEmpty())
+                                    <div>
+                                        <h5 class="text-sm font-semibold">Certificaciones</h5>
+                                        <ul class="mt-1 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+                                            @foreach ($p->estudiante->certificaciones as $certificacion)
+                                                <li class="break-words">
+                                                    {{ $certificacion->nombre }} · {{ $certificacion->entidad_emisora }}
+                                                    <span class="text-xs">· Emitida {{ $certificacion->fecha_emision->format('m/Y') }}
+                                                        @if ($certificacion->fecha_vencimiento) · vence {{ $certificacion->fecha_vencimiento->format('m/Y') }} @endif
+                                                    </span>
+                                                    @if ($certificacion->url_credencial)
+                                                        <a href="{{ $certificacion->url_credencial }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline">Ver credencial</a>
+                                                    @endif
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+                                @if ($p->estudiante->linkedin_url || $p->estudiante->github_url || $p->estudiante->portafolio_url)
+                                    <div>
+                                        <h5 class="text-sm font-semibold">Enlaces profesionales</h5>
+                                        <ul class="mt-1 space-y-1 text-sm">
+                                            @foreach (['LinkedIn' => $p->estudiante->linkedin_url, 'GitHub' => $p->estudiante->github_url, 'Portafolio' => $p->estudiante->portafolio_url] as $label => $url)
+                                                @if ($url)
+                                                    <li><a href="{{ $url }}" target="_blank" rel="noopener noreferrer" class="break-all text-blue-700 underline">{{ $label }}</a></li>
+                                                @endif
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+                            </div>
+                            @if (! $p->estudiante->titular && $p->estudiante->formaciones->isEmpty() && $p->estudiante->experiencias->isEmpty() && $p->estudiante->habilidades->isEmpty() && $p->estudiante->idiomas->isEmpty() && $p->estudiante->certificaciones->isEmpty() && ! $p->estudiante->linkedin_url && ! $p->estudiante->github_url && ! $p->estudiante->portafolio_url)
+                                <p class="mt-2 text-sm text-gray-500">El candidato aún no ha completado su perfil estructurado.</p>
+                            @endif
+                        </section>
+
                         @if ($p->carta_presentacion)
                             <p class="mt-3 break-words text-sm text-gray-700 dark:text-gray-300 italic">"{{ $p->carta_presentacion }}"</p>
                         @endif

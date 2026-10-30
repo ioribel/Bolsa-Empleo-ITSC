@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Events\CompanySubmittedForApproval;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
@@ -30,7 +31,7 @@ class EmpresaRegisterController extends Controller
             'telefono' => ['nullable', 'string', 'max:20'],
         ]);
 
-        $user = DB::transaction(function () use ($request) {
+        [$companyId, $user] = DB::transaction(function () use ($request): array {
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
@@ -39,16 +40,17 @@ class EmpresaRegisterController extends Controller
                 'email_verified_at' => now(),
             ]);
 
-            $user->empresa()->create([
+            $company = $user->empresa()->create([
                 'nombre_empresa' => $request->nombre_empresa,
                 'rnc' => $request->rnc,
                 'telefono' => $request->telefono,
                 'estado' => 'pendiente',
             ]);
 
-            return $user;
+            return [(int) $company->getKey(), $user];
         });
 
+        CompanySubmittedForApproval::dispatch($companyId);
         event(new Registered($user));
 
         return redirect()->route('login')->with(

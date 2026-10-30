@@ -50,20 +50,38 @@ La extracción se realiza localmente y admite PDF con texto seleccionable de has
 
 ## Modelo de datos
 
-La aplicación reutiliza las tablas existentes y añade `cv_original_name` a `estudiantes` para mostrar el nombre del archivo. El sistema de notificaciones utiliza la tabla estándar de Laravel `notifications` y `notification_deliveries` para evitar duplicados ante reintentos de cola. Los análisis de empleabilidad no se almacenan como historial.
+La aplicación reutiliza las tablas existentes y añade `cv_original_name` a `estudiantes` para mostrar el nombre del archivo. El perfil profesional del estudiante guarda formación, experiencia, habilidades, idiomas y certificaciones en tablas relacionadas; sus enlaces y titular se guardan en `estudiantes`. La completitud pondera por igual ocho criterios: titular, resumen, CV, formación, experiencia, al menos tres habilidades, un idioma y un enlace profesional. La migración agrega unicidad a `estudiantes.user_id` y detiene su ejecución con un mensaje explícito si encuentra usuarios duplicados. El catálogo inicial de 41 habilidades se carga mediante `HabilidadSeeder` sin eliminar las entradas existentes.
+
+El sistema de notificaciones utiliza la tabla estándar de Laravel `notifications` y `notification_deliveries` para evitar duplicados ante reintentos de cola. Los análisis de empleabilidad no se almacenan como historial. El método `Estudiante::perfilComoTexto()` prepara texto profesional sin datos identificativos, contacto ni enlaces y todavía no se envía a ningún servicio externo.
 
 ## Notificaciones
 
 La campanita compartida aparece para estudiantes, empresas y administradores. Las notificaciones persistidas se consultan exclusivamente desde la cuenta autenticada; se muestran las más recientes y la campana consulta cambios cada 30 segundos mientras la pestaña está visible. Al abrir una notificación, el servidor comprueba nuevamente la pertenencia y disponibilidad del recurso antes de marcarla como leída y redirigir.
 
-Los eventos de postulación, publicación de vacantes y cambios de estado finales se despachan después del commit. Los listeners usan la cola configurada en `.env`; en desarrollo se puede iniciar con:
+Los eventos de postulación, publicación de vacantes, cambios de estado finales y registro de empresas pendientes se procesan después del commit. Al publicarse una vacante, se notifica a los estudiantes de las carreras seleccionadas y a los administradores. Al registrarse una empresa pendiente, se notifica a los administradores. Los listeners usan la cola configurada en `.env`; en desarrollo se puede iniciar con:
 
 ```bash
 php artisan migrate
 php artisan queue:work --tries=3
 ```
 
-El comando `composer dev` también inicia un worker de cola. En producción, configura un supervisor o servicio equivalente para mantener `queue:work` en ejecución y ejecuta las migraciones como parte del despliegue. La actualización usa polling para evitar requerir WebSockets, Reverb o servicios adicionales. Los eventos de administrador no generan notificaciones en esta versión; la campana se comparte y muestra el estado vacío hasta definir eventos administrativos.
+El comando `composer dev` también inicia un worker de cola. En producción, configura un supervisor o servicio equivalente para mantener `queue:work` en ejecución y ejecuta las migraciones como parte del despliegue. La actualización usa polling para evitar requerir WebSockets, Reverb o servicios adicionales.
+
+## Cierre automático de vacantes
+
+Las vacantes publicadas cuya `fecha_cierre` sea anterior al día actual se cierran diariamente a las 00:05. Para procesar esta tarea en desarrollo, ejecuta:
+
+```bash
+php artisan schedule:work
+```
+
+En producción, configura el cron del servidor para ejecutar el scheduler de Laravel cada minuto:
+
+```cron
+* * * * * cd /ruta/a/la/aplicacion && php artisan schedule:run >> /dev/null 2>&1
+```
+
+En hosting compartido, sustituye la ruta y el ejecutable `php` por los valores proporcionados por el hosting. El comando `php artisan vacantes:cerrar-vencidas` también permite cerrar manualmente las vacantes vencidas.
 
 ## Instalación local
 

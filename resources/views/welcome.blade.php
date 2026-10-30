@@ -83,7 +83,7 @@
     <!-- Footer -->
     <footer class="bg-gray-50 border-t border-gray-200">
         <div class="max-w-7xl mx-auto px-6 py-8 text-center text-sm text-gray-500">
-            Instituto Técnico Superior Comunitario (ITSC) — Bolsa de Empleo
+            Instituto Técnico Superior Comunitario (ITSC) Bolsa de Empleo
         </div>
     </footer>
 

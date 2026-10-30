@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             CarreraSeeder::class,
+            HabilidadSeeder::class,
             AdminSeeder::class,
         ]);
     }
