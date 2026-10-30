@@ -78,6 +78,12 @@ class Estudiante extends Model
         return (int) round(count(array_filter($criterios)) / count($criterios) * 100);
     }
 
+    public function perfilSuficienteParaAnalisis(): bool
+    {
+        return $this->experiencias()->exists()
+            || ($this->formaciones()->exists() && $this->habilidades()->count() >= 3);
+    }
+
     /**
      * Returns the profile sections still needed to meet the completion criteria.
      *
@@ -132,7 +138,7 @@ class Estudiante extends Model
         $append('Titular', $this->titular);
         $append('Resumen', $this->resumen);
 
-        foreach ($this->formaciones as $formacion) {
+        foreach ($this->formaciones()->orderByDesc('en_curso')->orderByDesc('fecha_inicio')->get() as $formacion) {
             $append('Formación', implode(' — ', array_filter([
                 $formacion->titulo,
                 $formacion->institucion,
@@ -142,7 +148,7 @@ class Estudiante extends Model
             ])));
         }
 
-        foreach ($this->experiencias as $experiencia) {
+        foreach ($this->experiencias()->orderByDesc('actual')->orderByDesc('fecha_inicio')->get() as $experiencia) {
             $append('Experiencia', implode(' — ', array_filter([
                 $experiencia->cargo,
                 $experiencia->empresa,
@@ -151,15 +157,15 @@ class Estudiante extends Model
             ])));
         }
 
-        foreach ($this->habilidades as $habilidad) {
+        foreach ($this->habilidades()->orderBy('habilidades.nombre')->get() as $habilidad) {
             $append('Habilidad', $habilidad->nombre.' ('.$habilidad->pivot->nivel.')');
         }
 
-        foreach ($this->idiomas as $idioma) {
+        foreach ($this->idiomas()->orderBy('idioma')->get() as $idioma) {
             $append('Idioma', $idioma->idioma.' ('.$idioma->nivel.')');
         }
 
-        foreach ($this->certificaciones as $certificacion) {
+        foreach ($this->certificaciones()->orderByDesc('fecha_emision')->get() as $certificacion) {
             $append('Certificación', implode(' — ', array_filter([
                 $certificacion->nombre,
                 $certificacion->entidad_emisora,

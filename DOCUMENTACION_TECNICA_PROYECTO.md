@@ -176,9 +176,9 @@ tests/
 
 | Componente | Métodos/campos principales | Responsabilidad y dependencias |
 |---|---|
-| `EmployabilityAnalysisService` | `analyze`, `validateAdaptationSubmission` | Coordina extracción, anonimización, criterios, Gemini y validación de evidencia; calcula puntuación. Inyecta los cuatro servicios del análisis. |
+| `EmployabilityAnalysisService` | `analyze`, `profileEvidenceText`, `validateAdaptationSubmission` | Combina evidencia del CV y del perfil, limita/redacta el perfil, verifica cada cita contra la fuente declarada y calcula puntuación; valida que el borrador adaptado sea rastreable a ambas fuentes. |
 | `CvTextExtractor` | `extractFromStorage`, `extract` | Extrae texto localmente; máximo 2 MiB, 50 páginas y 60 000 caracteres; no incorpora OCR. |
-| `CvPrivacyRedactor` | `redact` | Omite nombre, email, matrícula y patrones de teléfono/correo antes del envío externo. |
+| `CvPrivacyRedactor` | `redact`, `redactProfile` | Omite nombre, email, teléfono, matrícula, URLs y patrones de contacto antes del envío externo. |
 | `VacancyCriteriaBuilder` | `build` | Divide requisitos/descripción en criterios únicos; límite de 30. |
 | `GeminiEmployabilityService` | `analyze`, `responseSchema` | Configura prompt/esquema JSON, invoca endpoint externo y gestiona errores HTTP/JSON. |
 | `NotificationDeliveryService` | `sendOnce(User, eventKey, data)` | Inserta clave única en `notification_deliveries` y persiste notificación si la clave es nueva. |
@@ -295,12 +295,12 @@ El documento describe las migraciones presentes; no certifica que hayan sido apl
 
 | Módulo/perfil | Funcionalidad confirmada en código | Estado y evidencia de pruebas |
 |---|---|---|
-| Autenticación | Registro de estudiante con matrícula/carrera; registro de empresa en estado pendiente; inicio/cierre de sesión; recuperación/cambio de contraseña y rutas de verificación de correo de Breeze. | Implementada. Hay pruebas de autenticación/registro en `tests/Feature/Auth`; no ejecutadas. El `User` no implementa `MustVerifyEmail` y los dos flujos de registro asignan `email_verified_at` al crear la cuenta. |
-| Empresas | Listar y filtrar vacantes propias; crear, editar, mostrar y borrar; publicar y cerrar con transición de estado; listar postulaciones propias, leer CV y cambiar estado. | Implementada. Hay pruebas de filtros de vacantes y CV/postulaciones; no ejecutadas. |
-| Estudiantes | Explorar vacantes publicadas para su carrera, ver detalles, cargar/descargar/eliminar CV, postularse y consultar/filtrar postulaciones. | Implementada. Hay pruebas `VacanteListingFiltersTest` y `StudentCvTest`; no ejecutadas. La tabla limita duplicados con índice único. |
-| Administración | Aprobar, bloquear o rechazar empresas; mantener carreras; listar vacantes publicadas; bloquear/activar usuarios no empresariales. Dashboard con contadores. | Implementada parcialmente respecto de una administración de vacantes completa: la ruta actual solo lista vacantes; no se halló edición/aprobación administrativa de vacantes. Hay pruebas para filtros y vacantes de administrador, no ejecutadas. |
-| Notificaciones | Notificaciones persistentes, feed para campana, historial, lectura individual/masiva y redirección condicionada por propietario/estado del recurso. Eventos encolables para empresas, estudiantes y administradores. | Implementada en el código actual. Hay pruebas `NotificationSystemTest` y `NotificationPersistenceTest`; no ejecutadas. Algunos archivos relacionados están sin confirmar en el árbol de trabajo. |
-| Asistente de empleabilidad | Consentimiento, extracción local del PDF, anonimización, comparación de requisitos vía Gemini, evidencias verificadas y descarga PDF adaptada. | Implementada; depende de configurar Gemini y de un PDF extraíble. Hay pruebas de análisis/CV y extractor; no ejecutadas. |
+| Autenticación | Registro de estudiante con matrícula/carrera; registro de empresa en estado pendiente; inicio/cierre de sesión; recuperación/cambio de contraseña y rutas de verificación de correo de Breeze. | Implementada. Las pruebas de `tests/Feature/Auth` pasaron en la ejecución de la suite completa de esta actualización. El `User` no implementa `MustVerifyEmail` y los dos flujos de registro asignan `email_verified_at` al crear la cuenta. |
+| Empresas | Listar y filtrar vacantes propias; crear, editar, mostrar y borrar; publicar y cerrar con transición de estado; listar postulaciones propias, leer CV y cambiar estado. | Implementada. La suite completa, incluidas las pruebas de filtros y CV/postulaciones, pasó en esta actualización. |
+| Estudiantes | Explorar vacantes publicadas para su carrera, ver detalles, cargar/descargar/eliminar CV, postularse y consultar/filtrar postulaciones. | Implementada. La suite completa, incluidas `VacanteListingFiltersTest` y `StudentCvTest`, pasó en esta actualización. La tabla limita duplicados con índice único. |
+| Administración | Aprobar, bloquear o rechazar empresas; mantener carreras; listar vacantes publicadas; bloquear/activar usuarios no empresariales. Dashboard con contadores. | Implementada parcialmente respecto de una administración de vacantes completa: la ruta actual solo lista vacantes; no se halló edición/aprobación administrativa de vacantes. Las pruebas incluidas en la suite completa pasaron en esta actualización. |
+| Notificaciones | Notificaciones persistentes, feed para campana, historial, lectura individual/masiva y redirección condicionada por propietario/estado del recurso. Eventos encolables para empresas, estudiantes y administradores. | Implementada en el código actual. `NotificationSystemTest` y `NotificationPersistenceTest` pasaron en la ejecución de la suite completa de esta actualización. |
+| Asistente de empleabilidad | Consentimiento versionado, extracción local del PDF, anonimización, evidencia del CV/perfil vía Gemini, análisis solo con perfil suficiente y descarga PDF adaptada. | Implementada; depende de configurar Gemini o de usar un HTTP fake en pruebas. La suite completa se ejecutó en esta actualización. |
 | Email de aprobación | Notificación por email al aprobar empresa. | Implementada en código. Entrega real depende del mailer configurado; el valor predeterminado versionado es `log`. No se ejecutó un envío. |
 
 No se encontró una integración de OCR, historial persistente de análisis, aplicación móvil/API REST, carga de logo de empresa desde un flujo de perfil, ni un panel para modificar vacantes como administrador. Esto describe lo que no se encontró en las rutas/clases revisadas; no implica que sean requisitos pendientes acordados.
@@ -424,12 +424,12 @@ sequenceDiagram
 
 ### Análisis de CV
 
-1. El estudiante solicita `POST /estudiante/vacantes/{vacante}/analisis-cv`, acepta consentimiento y puede adjuntar un PDF alternativo.
+1. El estudiante solicita `POST /estudiante/vacantes/{vacante}/analisis-cv`, acepta la versión vigente del consentimiento y puede adjuntar un PDF alternativo.
 2. Se valida vacante publicada y carrera coincidente; se aplica el límite de solicitudes.
-3. `EmployabilityAnalysisService` extrae texto, anonimiza identificadores conocidos y construye criterios desde requisitos/descripción.
-4. `GeminiEmployabilityService` envía el CV y datos de vacante a Gemini. El servicio verifica que citas devueltas existan literalmente en el texto; el porcentaje pondera coincidencias directas como 1 y relacionadas como 0.5.
-5. La página muestra el resultado sin persistir historial. Si el usuario subió un archivo temporal, su contenido se conserva codificado en cache de archivo por hasta 30 minutos para la descarga.
-6. Al descargar, el backend valida el fingerprint, las citas/evidencias y el consentimiento de revisión, genera PDF con Dompdf y elimina la copia temporal de cache cuando corresponde.
+3. `EmployabilityAnalysisService` extrae y anonimiza el CV si es legible, redacta el perfil profesional y limita ese bloque a 8 000 caracteres en registros completos, priorizando experiencia, habilidades y formación recientes. Si el CV no es legible, permite continuar solo con el perfil si cumple el umbral.
+4. `GeminiEmployabilityService` envía bloques `[CV]` y `[PERFIL]` separados y las instrucciones para devolver fuente por cita. El backend verifica cada cita literalmente contra la fuente declarada; no reasigna fuentes. La puntuación pondera coincidencias directas como 1 y relacionadas como 0.5.
+5. La página muestra distintivos de fuente, completitud del perfil y recomendaciones verificadas o brechas sin afirmar competencias no demostradas. No se persiste historial. Si se subió un CV legible, el archivo temporal se conserva codificado en caché hasta 30 minutos.
+6. Al descargar, el backend exige vacante publicada y carrera coincidente, valida el fingerprint de la fuente usada, las citas/evidencias y el consentimiento de revisión; genera el PDF con Dompdf y elimina la copia temporal de caché cuando corresponde.
 
 ```mermaid
 sequenceDiagram
@@ -499,7 +499,7 @@ La existencia de un API key funcional, worker, correo y conexión a base de dato
 3. **Campo con doble propósito.** `email_verified_at` se establece al registrar y también se usa para representar bloqueo de cuenta. Esto mezcla verificación y estado administrativo.
 4. **Cambio de correo puede causar bloqueo de acceso.** `ProfileController` borra `email_verified_at` al modificarlo y el login rechaza ese valor nulo; no se encontró un flujo de verificación efectivo que lo restablezca.
 5. **Límite compartido entre dos acciones.** Tanto analizar como descargar CV usan `throttle:cv-analysis`; el proveedor define cinco solicitudes por hora por usuario.
-6. **Versiones frontend mezcladas.** Tailwind Vite plugin es 4.x mientras Tailwind CSS y la sintaxis/configuración corresponden a 3.x. La compilación no fue validada.
+6. **Versiones frontend mezcladas.** Tailwind Vite plugin es 4.x mientras Tailwind CSS y la sintaxis/configuración corresponden a 3.x. `npm run build` se ejecutó correctamente durante esta actualización, aunque la diferencia de versiones permanece.
 7. **Diferencia de motor predeterminado.** README describe MySQL, pero `config/database.php` cae a SQLite si no se establece la variable de conexión.
 8. **Transiciones modeladas explícitamente.** Vacantes y postulaciones validan estados antes de actualizar y lanzar eventos.
 9. **Protecciones de CV presentes.** Se valida MIME/extensión declarada por Laravel, tamaño; el extractor verifica firma PDF, páginas y longitud, y la descarga de CV de postulación valida propiedad empresarial.
@@ -510,7 +510,7 @@ La existencia de un API key funcional, worker, correo y conexión a base de dato
 
 - La comprobación de duplicidad de postulación en el controlador y el índice único protegen el caso normal; dos solicitudes concurrentes pueden competir y provocar una excepción por la restricción, que no se convierte explícitamente en un mensaje de negocio.
 - El archivo de CV se escribe y la postulación se guarda en pasos separados. Un error en la base de datos tras guardar el archivo podría dejar un documento sin referencia; una política de compensación/limpieza debe evaluarse.
-- La descarga del CV adaptado comprueba que la vacante sea de la carrera, pero no aplica el mismo filtro `estado = publicada` que aplica el endpoint de análisis. El impacto depende de cómo se acceda a esa ruta y puede ser una inconsistencia funcional frente al ciclo de publicación.
+- La descarga del CV adaptado y el endpoint de análisis exigen que la vacante esté publicada y corresponda a la carrera del estudiante.
 - No se observaron índices dedicados para campos de búsqueda de texto o filtros recurrentes; es un riesgo de rendimiento al crecer el volumen, no evidencia de lentitud actual.
 - Los listeners requieren que el entorno ejecute un worker cuando la conexión de cola es asíncrona; sin él, las notificaciones pueden acumularse.
 - La puntuación depende de la respuesta semántica de un modelo externo, aunque las citas y el cálculo numérico se validan en backend; no constituye una evaluación determinista de contratación.
@@ -526,7 +526,7 @@ La existencia de un API key funcional, worker, correo y conexión a base de dato
 - `tests/Feature/NotificationSystemTest.php` y `NotificationPersistenceTest.php`: creación, entrega, persistencia e idempotencia.
 - `tests/Feature/AdminVacantesTest.php`, `ProfileTest.php` y pruebas de ejemplo.
 
-**No se ejecutó `php artisan test` ni ningún comando de build.** Por tanto, la existencia de las pruebas está comprobada por los archivos; su estado de ejecución, cobertura completa y resultado son desconocidos.
+**Validación de esta actualización:** `php artisan test` terminó con 93 pruebas y 501 assertions aprobadas; `npm run build` terminó correctamente. Esto confirma los comandos ejecutados en el entorno actual, no una prueba contra servicios externos reales.
 
 ### Recomendaciones de calidad
 
@@ -554,7 +554,7 @@ La existencia de un API key funcional, worker, correo y conexión a base de dato
 >
 > Una empresa recién registrada queda `pendiente`; solo una empresa aprobada crea vacantes. Las vacantes siguen `borrador → publicada → cerrada` y se asocian a carreras mediante `vacante_carrera`. Estudiantes solo listan vacantes publicadas de su carrera y una pareja vacante/estudiante no puede repetirse por índice único en `postulaciones`. La empresa propietaria evalúa postulaciones con estados `recibida`, `en_revision`, `aceptada`, `rechazada`.
 >
-> El CV del perfil se guarda en el disk `local` en el código actual y se puede leer desde `public` como compatibilidad con archivos antiguos. El CV de postulación se copia/guarda aparte. `EmployabilityAnalysisService` coordina `CvTextExtractor`, `CvPrivacyRedactor`, `VacancyCriteriaBuilder` y `GeminiEmployabilityService`; el análisis envía el texto a Gemini, requiere consentimiento y verifica citas en backend. La versión PDF se produce con Dompdf y no se guarda como historial.
+> El CV del perfil se guarda en el disk `local` en el código actual y se puede leer desde `public` como compatibilidad con archivos antiguos. El CV de postulación se copia/guarda aparte. `EmployabilityAnalysisService` coordina `CvTextExtractor`, `CvPrivacyRedactor`, `VacancyCriteriaBuilder` y `GeminiEmployabilityService`; con consentimiento versionado, el análisis envía bloques separados del CV y del perfil, redacta datos de contacto y verifica citas contra la fuente declarada. Puede usar solo un perfil suficiente si el CV no es legible. La versión PDF se produce con Dompdf y no se guarda como historial.
 >
 > Los eventos/listeners de notificaciones están en `app/Events` y `app/Listeners`; la entrega deduplicada usa `NotificationDeliveryService` y `notification_deliveries`. La conexión de cola predeterminada es `database`, así que en un entorno asíncrono se necesita worker.
 >

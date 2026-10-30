@@ -57,40 +57,43 @@
                         </p>
                         <p class="mt-2 text-sm text-indigo-900 dark:text-indigo-200">
                             @if ($tieneCvPerfil)
-                                Puedes subir un PDF para este análisis; si no seleccionas uno, se usará el CV de tu perfil.
+                                Puedes subir otro PDF o usar el de tu perfil. Si ese CV no es legible y tu perfil tiene información suficiente, el análisis continuará solo con tu perfil.
+                            @elseif ($puedeAnalizarSinCv)
+                                Puedes analizar tu perfil profesional estructurado sin subir un PDF, o adjuntar un CV para complementar la evidencia.
                             @else
-                                Sube un PDF para analizar esta vacante. El archivo se utilizará solo para este análisis y no se guardará en tu perfil.
+                                Sube un PDF para analizar esta vacante. También puedes completar tu perfil para analizarlo sin CV.
                             @endif
                         </p>
                         <div class="mt-3 rounded-md bg-white/70 p-3 text-xs leading-5 text-gray-700 dark:bg-gray-900/60 dark:text-gray-300">
-                            Al continuar se enviará a Google Gemini el texto extraído del PDF que subas o, si no subes uno, del CV guardado en tu perfil, junto con los datos de esta vacante.
-                            Se omiten el nombre, correo y matrícula del perfil, además de teléfonos y correos detectados en el texto.
+                            Al continuar se enviarán a un servicio externo (Google Gemini) el texto extraído del CV y los datos profesionales de tu perfil (formación, experiencia, habilidades, idiomas y certificaciones), junto con los datos de esta vacante.
+                            Se omiten nombre, correo, teléfono, matrícula y URLs; también se redactan datos de contacto detectados en el CV. Un PDF que adjuntes se utilizará solo para este análisis y no se guardará en tu perfil.
                             Google puede conservar solicitudes y respuestas hasta 55 días para monitoreo de abuso.
                         </div>
                         <form id="cv-analysis-form" method="POST" action="{{ route('estudiante.vacantes.analizar-cv', $vacante) }}" enctype="multipart/form-data" class="mt-4">
                             @csrf
+                            <input type="hidden" name="consent_version" value="{{ \App\Http\Controllers\Estudiante\EmployabilityAnalysisController::CONSENT_VERSION }}">
                             <label for="analysis-cv" class="block text-sm font-medium text-gray-800 dark:text-gray-200">
-                                PDF para este análisis ({{ $tieneCvPerfil ? 'opcional' : 'requerido' }}, máximo 2 MB)
+                                PDF para este análisis ({{ $tieneCvPerfil || $puedeAnalizarSinCv ? 'opcional' : 'requerido' }}, máximo 2 MB)
                             </label>
-                            <input id="analysis-cv" type="file" name="cv" accept="application/pdf,.pdf" @unless ($tieneCvPerfil) required @endunless
+                            <input id="analysis-cv" type="file" name="cv" accept="application/pdf,.pdf" @unless ($tieneCvPerfil || $puedeAnalizarSinCv) required @endunless
                                 class="mt-1 block w-full text-sm text-gray-700 dark:text-gray-300">
                             <x-input-error :messages="$errors->get('cv')" class="mt-2" />
                             <label class="flex items-start gap-2 text-sm text-gray-800 dark:text-gray-200">
                                 <input type="checkbox" name="consent" value="1" required class="mt-1 rounded border-gray-300 text-indigo-600 shadow-sm">
-                                <span>Consiento que el texto de mi CV se procese con Gemini para generar este análisis.</span>
+                                <span>Consiento que se envíen a Gemini el contenido de mi CV y los datos profesionales de mi perfil indicados arriba, sin datos de contacto, para generar este análisis.</span>
                             </label>
                             <button type="submit" class="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-md bg-indigo-700 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 sm:w-auto">
-                                Analizar mi CV con IA
+                                Analizar mi CV y perfil con IA
                             </button>
                         </form>
                         <div id="cv-processing-modal" class="hidden" style="position: fixed; inset: 0; z-index: 1055; align-items: center; justify-content: center; background: rgba(17, 24, 39, .5); padding: 1rem;">
                             <div class="w-full max-w-lg overflow-hidden rounded-lg border border-gray-200 bg-white text-gray-900 shadow-xl" style="margin: auto;" role="dialog" aria-modal="true" aria-labelledby="cv-processing-title" aria-describedby="cv-processing-message">
                                 <div class="border-b border-gray-200 px-5 py-4">
-                                    <h2 id="cv-processing-title" class="text-lg font-semibold">Analizando tu CV</h2>
+                                    <h2 id="cv-processing-title" class="text-lg font-semibold">Analizando tu CV y perfil</h2>
                                 </div>
                                 <div class="flex items-center gap-4 px-5 py-5" aria-live="polite">
                                     <span class="h-8 w-8 shrink-0 animate-spin rounded-full border-4 border-indigo-100 border-r-indigo-600 motion-reduce:animate-none" aria-hidden="true"></span>
-                                    <p id="cv-processing-message" class="m-0 text-sm text-gray-700">Estamos procesando el currículum con Gemini. Puede tardar unos segundos.</p>
+                                    <p id="cv-processing-message" class="m-0 text-sm text-gray-700">Estamos procesando la información profesional con Gemini. Puede tardar unos segundos.</p>
                                 </div>
                             </div>
                         </div>

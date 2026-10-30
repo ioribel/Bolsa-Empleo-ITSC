@@ -19,10 +19,13 @@ use Illuminate\Support\Str;
 
 class EmployabilityAnalysisController extends Controller
 {
+    public const CONSENT_VERSION = '2026-10-29-v2';
+
     public function analyze(Request $request, string $vacanteId, EmployabilityAnalysisService $analysisService): Response|RedirectResponse
     {
         $request->validate([
             'consent' => ['required', 'accepted'],
+            'consent_version' => ['required', 'in:'.self::CONSENT_VERSION],
             'cv' => ['nullable', 'file', 'mimes:pdf', 'max:2048'],
         ]);
 
@@ -38,7 +41,7 @@ class EmployabilityAnalysisController extends Controller
             $cvContents = $uploadedCv?->get();
             $analysis = $analysisService->analyze($estudiante, $vacante, $cvContents);
 
-            if ($cvContents !== null) {
+            if ($cvContents !== null && $analysis['profile_only'] === false) {
                 $cvSource = bin2hex(random_bytes(32));
                 Cache::store('file')->put($this->uploadedCvCacheKey($estudiante->user_id, $cvSource), base64_encode($cvContents), now()->addMinutes(30));
                 $analysis['cv_source'] = $cvSource;
@@ -62,35 +65,51 @@ class EmployabilityAnalysisController extends Controller
         $validated = $request->validate([
             'consent_confirmed' => ['required', 'accepted'],
             'cv_fingerprint' => ['required', 'regex:/\A[a-f0-9]{64}\z/'],
+            'profile_only' => ['required', 'in:0,1'],
             'adapted_cv.profile.text' => ['required', 'string', 'max:2000'],
-            'adapted_cv.profile.evidence' => ['required', 'array', 'min:1', 'max:10'],
-            'adapted_cv.profile.evidence.*' => ['required', 'string', 'max:500'],
+            'adapted_cv.profile.evidence' => ['sometimes', 'array', 'max:10'],
+            'adapted_cv.profile.evidence.*.source' => ['required', 'in:cv,perfil'],
+            'adapted_cv.profile.evidence.*.quote' => ['required', 'string', 'max:500'],
             'cv_source' => ['nullable', 'regex:/\A[a-f0-9]{64}\z/'],
             ...$this->sectionValidationRules(),
         ]);
 
         $estudiante = $request->user()->estudiante;
-        $vacante = Vacante::with(['empresa', 'carreras'])->findOrFail($vacanteId);
+        $vacante = Vacante::where('estado', 'publicada')
+            ->with(['empresa', 'carreras'])
+            ->findOrFail($vacanteId);
         abort_unless($vacante->carreras->contains('id', $estudiante->carrera_id), 403);
 
+        $cvSource = $validated['cv_source'] ?? null;
         try {
-            $cvSource = $validated['cv_source'] ?? null;
-            if ($cvSource === null) {
-                $contents = $this->profileCvContents($estudiante->cv_path);
+            $profileText = $analysisService->profileEvidenceText($estudiante);
+            if ($validated['profile_only'] === '1') {
+                abort_unless(hash_equals($validated['cv_fingerprint'], hash('sha256', $profileText)), 409, 'El perfil cambió desde el análisis. Vuelve a analizar la vacante.');
+                $cvText = '';
             } else {
-                $encodedContents = Cache::store('file')->get($this->uploadedCvCacheKey($estudiante->user_id, $cvSource));
-                $contents = is_string($encodedContents) ? base64_decode($encodedContents, true) : false;
+                if ($cvSource === null) {
+                    $contents = $this->profileCvContents($estudiante->cv_path);
+                } else {
+                    $encodedContents = Cache::store('file')->get($this->uploadedCvCacheKey($estudiante->user_id, $cvSource));
+                    $contents = is_string($encodedContents) ? base64_decode($encodedContents, true) : false;
+                }
+
+                abort_if(! is_string($contents), 409, 'El PDF temporal ya no está disponible. Vuelve a analizar la vacante.');
+                abort_unless(hash_equals($validated['cv_fingerprint'], hash('sha256', $contents)), 409, 'El currículum cambió desde el análisis. Vuelve a analizar la vacante.');
+                $cvText = $redactor->redact($extractor->extract($contents), $estudiante);
             }
 
-            abort_if(! is_string($contents), 409, 'El PDF temporal ya no está disponible. Vuelve a analizar la vacante.');
-            abort_unless(hash_equals($validated['cv_fingerprint'], hash('sha256', $contents)), 409, 'El currículum cambió desde el análisis. Vuelve a analizar la vacante.');
-            $cvText = $redactor->redact($extractor->extract($contents), $estudiante);
             $draft = $validated['adapted_cv'];
 
-            foreach (['education', 'skills', 'experience', 'projects', 'certifications', 'technologies'] as $section) {
+            foreach (['education', 'skills', 'experience', 'projects', 'certifications', 'technologies', 'languages'] as $section) {
                 $draft[$section] ??= [];
             }
-            $adaptedCv = $analysisService->validateAdaptationSubmission($draft, $cvText);
+            $adaptedCv = $analysisService->validateAdaptationSubmission(
+                $draft,
+                $cvText,
+                $profileText,
+                in_array($validated['consent_confirmed'], [true, 1, '1', 'yes', 'on'], true),
+            );
         } catch (CvExtractionException|EmployabilityAnalysisException $exception) {
             abort(422, $exception->getMessage());
         }
@@ -124,11 +143,14 @@ class EmployabilityAnalysisController extends Controller
     private function sectionValidationRules(): array
     {
         $rules = [];
-        foreach (['education', 'skills', 'experience', 'projects', 'certifications', 'technologies'] as $section) {
+        foreach (['education', 'skills', 'experience', 'projects', 'certifications', 'technologies', 'languages'] as $section) {
             $rules["adapted_cv.{$section}"] = ['sometimes', 'array', 'max:50'];
             $rules["adapted_cv.{$section}.*.text"] = ['required', 'string', 'max:1000'];
-            $rules["adapted_cv.{$section}.*.evidence"] = ['required', 'string', 'max:500'];
+            $rules["adapted_cv.{$section}.*.evidence"] = ['nullable', 'string', 'max:500'];
+            $rules["adapted_cv.{$section}.*.source"] = ['nullable', 'in:cv,perfil'];
         }
+        $rules['adapted_cv.manual'] = ['sometimes', 'array'];
+        $rules['adapted_cv.manual.*'] = ['nullable', 'string', 'max:2000'];
 
         return $rules;
     }

@@ -29,6 +29,7 @@
             'skills' => 'Habilidades',
             'technologies' => 'Tecnologías y herramientas',
             'certifications' => 'Certificaciones',
+            'languages' => 'Idiomas',
         ];
     @endphp
     @foreach ($sectionLabels as $section => $label)
@@ -39,6 +40,21 @@
             @endforeach
         @endif
     @endforeach
+
+    @php
+        $hasStudentConfirmedContent = $adaptedCv['profile']['text'] !== '' && ! $adaptedCv['profile']['verified'];
+        foreach (array_keys($sectionLabels) as $section) {
+            foreach ($adaptedCv[$section] as $item) {
+                if ($item['student_confirmed']) {
+                    $hasStudentConfirmedContent = true;
+                    break 2;
+                }
+            }
+        }
+    @endphp
+    @if ($hasStudentConfirmedContent)
+        <p class="notice">El estudiante confirmó como verdadero el contenido agregado o editado que no tiene cita verificable en el CV o en el perfil.</p>
+    @endif
 
     <p class="notice">Versión revisada por el estudiante para la vacante “{{ $vacante->titulo }}” en {{ $vacante->empresa->nombre_empresa }}. Verifica que el contenido refleje tus antecedentes reales.</p>
 </body>
