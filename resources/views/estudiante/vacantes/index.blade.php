@@ -1,13 +1,13 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-500 dark:text-gray-500 leading-tight">
+        <h1 class="font-semibold text-xl text-gray-500 dark:text-gray-500 leading-tight">
             {{ __('Vacantes para tu carrera') }}
-        </h2>
+        </h1>
     </x-slot>
 
-    <div class="py-12">
-        <main class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-            <section class="rounded-lg bg-white p-5 shadow-sm dark:bg-gray-800 sm:p-6">
+    <div class="itsc-page py-8 sm:py-10">
+        <section class="mx-auto max-w-7xl space-y-3 px-4 sm:px-6 lg:px-8">
+            <section class="itsc-surface p-4 sm:p-5">
                 <form method="GET" action="{{ route('estudiante.vacantes.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <label class="text-sm font-medium text-gray-900 dark:text-gray-200">
                         Buscar
@@ -42,36 +42,42 @@
                         </select>
                     </label>
                     <div class="flex items-end gap-3">
-                        <button type="submit" class="inline-flex min-h-10 items-center rounded-md bg-blue-700 px-4 text-sm font-semibold text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Filtrar</button>
-                        <a href="{{ route('estudiante.vacantes.index') }}" class="inline-flex min-h-10 items-center text-sm font-medium text-gray-900 hover:underline dark:text-gray-300">Limpiar</a>
+                        <button type="submit" class="inline-flex min-h-10 items-center rounded-lg bg-itsc-slate-700 px-4 text-sm font-medium text-white transition-colors hover:bg-itsc-slate-900">Filtrar</button>
+                        <a href="{{ route('estudiante.vacantes.index') }}" class="inline-flex min-h-10 items-center text-sm font-medium text-itsc-slate-700 hover:text-itsc-red-700">Limpiar</a>
                     </div>
                 </form>
                 @if ($errors->any())
-                    <p class="mt-3 text-sm text-red-600">Revisa los filtros seleccionados e inténtalo de nuevo.</p>
+                    <p role="alert" class="mt-3 text-sm text-red-600">Revisa los filtros seleccionados e inténtalo de nuevo.</p>
                 @endif
             </section>
 
-            <p class="text-sm text-black dark:text-black">{{ $vacantes->total() }} {{ $vacantes->total() === 1 ? 'vacante activa' : 'vacantes activas' }}</p>
+            <p class="text-sm text-itsc-slate-500">{{ $vacantes->total() }} {{ $vacantes->total() === 1 ? 'vacante activa' : 'vacantes activas' }}</p>
             @forelse ($vacantes as $vacante)
-                <a href="{{ route('estudiante.vacantes.show', $vacante) }}"
-                   class="block rounded-lg bg-white p-6 shadow-sm transition hover:shadow-md dark:bg-gray-800">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">{{ $vacante->titulo }}</h3>
-                            <p class="text-sm text-gray-700 dark:text-gray-400">{{ $vacante->empresa->nombre_empresa }}</p>
+            <div class="itsc-surface p-4 transition-colors hover:border-itsc-slate-300 sm:p-5">
+                    <a href="{{ route('estudiante.vacantes.show', $vacante) }}" class="block">
+                        <div class="flex justify-between items-start gap-4">
+                            <div>
+                                <h3 class="text-base font-medium text-itsc-slate-900">{{ $vacante->titulo }}</h3>
+                                <p class="text-sm text-itsc-slate-500">{{ $vacante->empresa->nombre_empresa }}</p>
+                            </div>
+                            <span class="rounded-full bg-itsc-slate-100 px-2 py-1 text-xs text-itsc-slate-700">
+                                {{ ucfirst($vacante->modalidad) }}
+                            </span>
                         </div>
-                        <span class="text-xs px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">
-                            {{ ucfirst($vacante->modalidad) }}
-                        </span>
+                        <p class="mt-2 line-clamp-2 text-sm text-itsc-slate-700">{{ $vacante->descripcion }}</p>
+                    </a>
+                    <div class="mt-4 flex justify-end">
+                        <a href="{{ route('estudiante.empresas.show', $vacante->empresa) }}" class="inline-flex min-h-10 items-center rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-100">
+                            Ver perfil de la empresa
+                        </a>
                     </div>
-                    <p class="mt-2 text-sm text-gray-900 dark:text-gray-300 line-clamp-2">{{ $vacante->descripcion }}</p>
-                </a>
+                </div>
             @empty
-                <div class="rounded-lg bg-white p-6 text-center text-gray-900 shadow-sm dark:bg-gray-800 dark:text-gray-300">
+                <div class="itsc-surface p-6 text-center text-sm text-itsc-slate-500">
                     {{ count($filters) ? 'No se encontraron vacantes con esos filtros.' : 'No hay vacantes publicadas para tu carrera en este momento.' }}
                 </div>
             @endforelse
             <div>{{ $vacantes->links() }}</div>
-        </main>
+        </section>
     </div>
 </x-app-layout>

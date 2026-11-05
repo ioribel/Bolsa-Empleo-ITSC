@@ -1,6 +1,6 @@
 <x-app-layout>
     <div class="min-h-[calc(100vh-4rem)] bg-slate-100 px-4 py-8 sm:px-6 sm:py-12">
-        <main class="mx-auto max-w-7xl">
+        <div class="mx-auto max-w-7xl">
             <section class="overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 shadow-2xl shadow-slate-900/15">
                 <div class="border-b border-white/10 px-6 py-7 sm:px-8 sm:py-8">
                     <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
@@ -74,6 +74,10 @@
                     <div class="mt-8 border-t border-white/10 pt-6">
                         <h2 class="text-sm font-semibold text-slate-200">Accesos de empresa</h2>
                         <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                            <a href="{{ route('empresa.perfil.edit') }}" class="group inline-flex min-h-12 items-center justify-between gap-3 rounded-xl border border-sky-400/30 bg-sky-500/10 px-5 py-3 text-sm font-semibold text-sky-100 shadow-lg shadow-sky-950/10 transition duration-200 hover:-translate-y-0.5 hover:bg-sky-500/20 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-slate-900">
+                                Editar perfil de empresa
+                                <svg class="h-4 w-4 text-sky-200 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6 6 6-6 6" /></svg>
+                            </a>
                             <a href="{{ route('empresa.vacantes.index') }}" class="group inline-flex min-h-12 items-center justify-between gap-3 rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-950/20 transition duration-200 hover:-translate-y-0.5 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900">
                                 Gestionar vacantes
                                 <svg class="h-4 w-4 text-blue-200 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6 6 6-6 6" /></svg>
@@ -82,6 +86,6 @@
                     </div>
                 </div>
             </section>
-        </main>
+        </div>
     </div>
 </x-app-layout>

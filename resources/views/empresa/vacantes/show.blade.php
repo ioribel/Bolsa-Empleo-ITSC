@@ -1,14 +1,14 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-600
+        <h1 class="font-semibold text-xl text-gray-800 dark:text-gray-600
          leading-tight">
             {{ $vacante->titulo }}
-        </h2>
+        </h1>
     </x-slot>
 
-    <div class="py-12">
+    <div class="itsc-page py-8 sm:py-10">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6 space-y-4">
+            <div class="itsc-surface space-y-4 p-4 sm:p-5">
                 <div>
                     <span class="px-2 py-1 text-xs rounded-full
                         @if($vacante->estado === 'publicada') bg-green-100 text-green-800
@@ -78,8 +78,8 @@
                     <p class="text-gray-900 dark:text-gray-100">{{ $vacante->postulaciones_count }}</p>
                 </div>
 
-                <div class="pt-4">
-                    <a href="{{ route('empresa.vacantes.index') }}" class="text-sm text-gray-600 dark:text-gray-400 underline">← Volver al listado</a>
+                <div class="border-t border-itsc-slate-100 pt-4">
+                    <a href="{{ route('empresa.vacantes.index') }}" class="inline-flex min-h-10 items-center text-sm font-medium text-itsc-slate-700 hover:text-itsc-red-700">← Volver al listado</a>
                 </div>
             </div>
         </div>

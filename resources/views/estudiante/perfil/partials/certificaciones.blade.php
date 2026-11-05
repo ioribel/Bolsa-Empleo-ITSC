@@ -1,56 +1,65 @@
-<section class="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800 sm:p-6" x-data="{ adding: false }">
-    <div class="flex items-center justify-between gap-3">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Certificaciones</h3>
-        <button type="button" @click="adding = !adding" class="shrink-0 rounded-md bg-[#042C53] px-3 py-2 text-xs font-semibold text-white">
-            <span x-text="adding ? 'Cancelar' : 'Agregar'"></span>
+<x-profile-card x-data="{ adding: false }">
+    <x-slot name="header">
+        <div class="flex items-center gap-2">
+            <svg class="h-[18px] w-[18px] text-itsc-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z" />
+            </svg>
+            <h2 class="text-[15px] font-medium text-itsc-slate-900">Certificaciones</h2>
+        </div>
+    </x-slot>
+    <x-slot name="actions">
+        <button type="button" @click="adding = !adding" :aria-expanded="adding.toString()" aria-label="Agregar certificación"
+            class="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-itsc-slate-300 bg-white text-itsc-slate-700 transition-colors hover:bg-itsc-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-itsc-red-600/15">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" d="M12 5v14M5 12h14" /></svg>
         </button>
-    </div>
+    </x-slot>
 
-    <form x-cloak x-show="adding" x-transition method="POST" action="{{ route('estudiante.perfil.certificaciones.store') }}"
-        class="mt-4 grid grid-cols-1 gap-3 rounded-md border border-gray-200 p-3 dark:border-gray-700 sm:grid-cols-2">
+    <form x-cloak x-show="adding" x-transition method="POST" action="{{ route('estudiante.perfil.certificaciones.store') }}" class="mb-3 grid grid-cols-1 gap-3 rounded-xl border border-itsc-slate-100 p-3">
         @csrf
-        <input name="nombre" required maxlength="255" placeholder="Nombre de la certificación" class="rounded-md border-gray-300 text-sm">
-        <input name="entidad_emisora" required maxlength="255" placeholder="Entidad emisora" class="rounded-md border-gray-300 text-sm">
-        <label class="text-sm">Fecha de emisión <input name="fecha_emision" type="date" required class="mt-1 block w-full rounded-md border-gray-300 text-sm"></label>
-        <label class="text-sm">Vencimiento (opcional) <input name="fecha_vencimiento" type="date" class="mt-1 block w-full rounded-md border-gray-300 text-sm"></label>
-        <input name="url_credencial" type="url" maxlength="255" placeholder="URL HTTPS de la credencial (opcional)" class="rounded-md border-gray-300 text-sm sm:col-span-2">
-        <button class="rounded-md bg-[#042C53] px-4 py-2 text-sm font-semibold text-white sm:col-span-2">Guardar certificación</button>
+        <label class="text-xs text-itsc-slate-500">Nombre<input name="nombre" required maxlength="255" placeholder="Nombre de la certificación" class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm focus:border-itsc-red-600 focus:outline-none focus:ring-4 focus:ring-itsc-red-600/15"></label>
+        <label class="text-xs text-itsc-slate-500">Entidad emisora<input name="entidad_emisora" required maxlength="255" placeholder="Entidad emisora" class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm focus:border-itsc-red-600 focus:outline-none focus:ring-4 focus:ring-itsc-red-600/15"></label>
+        <label class="text-xs text-itsc-slate-500">Fecha de emisión<input name="fecha_emision" type="date" required class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm"></label>
+        <label class="text-xs text-itsc-slate-500">Vencimiento (opcional)<input name="fecha_vencimiento" type="date" class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm"></label>
+        <label class="text-xs text-itsc-slate-500">URL de la credencial (opcional)<input name="url_credencial" type="url" maxlength="255" placeholder="https://..." class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm"></label>
+        <button class="min-h-10 rounded-lg bg-itsc-slate-700 px-4 text-[13px] font-medium text-white">Guardar certificación</button>
     </form>
 
-    <div class="mt-4 space-y-3">
+    <div class="space-y-2">
         @forelse ($estudiante->certificaciones as $certificacion)
-            <article x-data="{ editing: false }" class="rounded-md border border-gray-200 p-3 dark:border-gray-700">
+            <article x-data="{ editing: false }" class="rounded-xl border border-itsc-slate-100 p-3">
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div class="min-w-0">
-                        <h4 class="break-words font-medium text-gray-900 dark:text-gray-100">{{ $certificacion->nombre }}</h4>
-                        <p class="break-words text-sm text-gray-600 dark:text-gray-300">{{ $certificacion->entidad_emisora }}</p>
-                        <p class="text-xs text-gray-500">Emitida {{ $certificacion->fecha_emision->format('m/Y') }}
-                            @if ($certificacion->fecha_vencimiento) · vence {{ $certificacion->fecha_vencimiento->format('m/Y') }} @endif
-                        </p>
+                        <h3 class="break-words text-sm font-medium text-itsc-slate-900">{{ $certificacion->nombre }}</h3>
+                        <p class="break-words text-sm text-itsc-slate-500">{{ $certificacion->entidad_emisora }}</p>
+                        <p class="text-xs text-itsc-slate-500">Emitida {{ $certificacion->fecha_emision->format('m/Y') }}@if ($certificacion->fecha_vencimiento) · vence {{ $certificacion->fecha_vencimiento->format('m/Y') }}@endif</p>
                         @if ($certificacion->url_credencial)
-                            <a href="{{ $certificacion->url_credencial }}" target="_blank" rel="noopener noreferrer" class="break-all text-sm text-blue-700 underline">Ver credencial</a>
+                            <a href="{{ $certificacion->url_credencial }}" target="_blank" rel="noopener noreferrer" class="break-all text-sm text-itsc-red-600 hover:text-itsc-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-itsc-red-600">Ver credencial</a>
                         @endif
                     </div>
-                    <div class="flex shrink-0 gap-3 text-sm">
-                        <button type="button" @click="editing = !editing" class="text-blue-700 underline">Editar</button>
+                    <div class="flex shrink-0 gap-1">
+                        <button type="button" @click="editing = !editing" :aria-expanded="editing.toString()" aria-label="Editar certificación"
+                            class="inline-flex min-h-10 items-center rounded-lg px-3 text-[13px] text-itsc-slate-700 hover:bg-itsc-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-itsc-red-600">Editar</button>
                         <form method="POST" action="{{ route('estudiante.perfil.certificaciones.destroy', $certificacion) }}" onsubmit="return confirm('¿Eliminar esta certificación?');">
                             @csrf @method('DELETE')
-                            <button class="text-red-700 underline">Eliminar</button>
+                            <button class="min-h-10 rounded-lg px-3 text-[13px] text-red-800 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300">Eliminar</button>
                         </form>
                     </div>
                 </div>
-                <form x-cloak x-show="editing" x-transition method="POST" action="{{ route('estudiante.perfil.certificaciones.update', $certificacion) }}" class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <form x-cloak x-show="editing" x-transition method="POST" action="{{ route('estudiante.perfil.certificaciones.update', $certificacion) }}" class="mt-3 grid grid-cols-1 gap-3 border-t border-itsc-slate-100 pt-3">
                     @csrf @method('PUT')
-                    <input name="nombre" value="{{ $certificacion->nombre }}" required maxlength="255" class="rounded-md border-gray-300 text-sm">
-                    <input name="entidad_emisora" value="{{ $certificacion->entidad_emisora }}" required maxlength="255" class="rounded-md border-gray-300 text-sm">
-                    <label class="text-sm">Fecha de emisión <input name="fecha_emision" type="date" value="{{ $certificacion->fecha_emision->format('Y-m-d') }}" required class="mt-1 block w-full rounded-md border-gray-300 text-sm"></label>
-                    <label class="text-sm">Vencimiento <input name="fecha_vencimiento" type="date" value="{{ $certificacion->fecha_vencimiento?->format('Y-m-d') }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm"></label>
-                    <input name="url_credencial" type="url" value="{{ $certificacion->url_credencial }}" maxlength="255" placeholder="URL HTTPS de la credencial" class="rounded-md border-gray-300 text-sm sm:col-span-2">
-                    <button class="rounded-md bg-[#042C53] px-4 py-2 text-sm font-semibold text-white sm:col-span-2">Guardar cambios</button>
+                    <label class="text-xs text-itsc-slate-500">Nombre<input name="nombre" value="{{ $certificacion->nombre }}" required maxlength="255" class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm"></label>
+                    <label class="text-xs text-itsc-slate-500">Entidad emisora<input name="entidad_emisora" value="{{ $certificacion->entidad_emisora }}" required maxlength="255" class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm"></label>
+                    <label class="text-xs text-itsc-slate-500">Fecha de emisión<input name="fecha_emision" type="date" value="{{ $certificacion->fecha_emision->format('Y-m-d') }}" required class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm"></label>
+                    <label class="text-xs text-itsc-slate-500">Vencimiento<input name="fecha_vencimiento" type="date" value="{{ $certificacion->fecha_vencimiento?->format('Y-m-d') }}" class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm"></label>
+                    <label class="text-xs text-itsc-slate-500">URL de la credencial<input name="url_credencial" type="url" value="{{ $certificacion->url_credencial }}" maxlength="255" class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm"></label>
+                    <button class="min-h-10 rounded-lg bg-itsc-slate-700 px-4 text-[13px] font-medium text-white">Guardar cambios</button>
                 </form>
             </article>
         @empty
-            <p class="text-sm text-gray-500">Aún no has agregado certificaciones.</p>
+            <x-profile-empty-state text="Suma cursos y credenciales." class="p-3">
+                <x-slot name="icon"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z" /></svg></x-slot>
+                <x-slot name="action"><button type="button" @click="adding = true" class="min-h-10 px-2 text-sm font-medium text-itsc-red-600">Agregar certificación</button></x-slot>
+            </x-profile-empty-state>
         @endforelse
     </div>
-</section>
+</x-profile-card>

@@ -1,1 +1,1 @@
-<img {{ $attributes->merge(['src' => asset('images/logo-itsc.png'), 'alt' => 'Logo del ITSC', 'class' => 'h-10 w-10 shrink-0 rounded-md object-contain']) }}>
+<img width="40" height="40" {{ $attributes->merge(['src' => asset('images/logo-itsc.png'), 'alt' => 'Logo del ITSC', 'class' => 'h-10 w-10 shrink-0 rounded-md object-contain']) }}>

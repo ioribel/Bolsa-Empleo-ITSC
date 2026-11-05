@@ -1,10 +1,10 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-black">Vacantes activas</h2>
+        <h1 class="text-xl font-semibold leading-tight text-black">Vacantes activas</h1>
     </x-slot>
 
     <div class="py-8 sm:py-12">
-        <main class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+        <section class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
             <section class="rounded-lg bg-white p-5 shadow-sm dark:bg-gray-800 sm:p-6">
                 <form method="GET" action="{{ route('admin.vacantes.index') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <label class="text-sm font-medium text-gray-900 dark:text-gray-200">
@@ -54,7 +54,7 @@
                     </div>
                 </form>
                 @if ($errors->any())
-                    <p class="mt-3 text-sm text-red-600">Revisa los filtros seleccionados e inténtalo de nuevo.</p>
+                    <p role="alert" class="mt-3 text-sm text-red-600">Revisa los filtros seleccionados e inténtalo de nuevo.</p>
                 @endif
             </section>
 
@@ -112,6 +112,6 @@
             </section>
 
             <div>{{ $vacantes->links() }}</div>
-        </main>
+        </section>
     </div>
 </x-app-layout>

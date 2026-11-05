@@ -1,61 +1,64 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-500 dark:text-gray-500 leading-tight">
+        <h1 class="font-semibold text-xl text-gray-500 dark:text-gray-500 leading-tight">
             {{ $vacante->titulo }}
-        </h2>
+        </h1>
     </x-slot>
 
-    <div class="py-12">
+    <div class="itsc-page py-8 sm:py-10">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6 space-y-4">
+            <div class="itsc-surface space-y-4 p-4 sm:p-5">
                 @if (session('status'))
-                    <div class="p-4 bg-green-100 text-green-800 rounded-md">{{ session('status') }}</div>
+                    <div role="status" aria-live="polite" class="p-4 bg-green-100 text-green-800 rounded-md">{{ session('status') }}</div>
                 @endif
                 @if (session('error'))
-                    <div class="p-4 bg-red-100 text-red-800 rounded-md">{{ session('error') }}</div>
+                    <div role="alert" class="p-4 bg-red-100 text-red-800 rounded-md">{{ session('error') }}</div>
                 @endif
                 @if ($errors->any())
-                    <div class="p-4 bg-red-100 text-red-800 rounded-md">
+                    <div role="alert" class="p-4 bg-red-100 text-red-800 rounded-md">
                         {{ $errors->first() }}
                     </div>
                 @endif
 
-                <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $vacante->empresa->nombre_empresa }}</p>
+                <div class="flex flex-col gap-2 border-b border-itsc-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p class="text-sm font-medium text-itsc-slate-700">{{ $vacante->empresa->nombre_empresa }}</p>
+                    <a href="{{ route('estudiante.empresas.show', $vacante->empresa) }}" class="inline-flex min-h-10 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-100">
+                        Ver perfil de la empresa
+                    </a>
                 </div>
 
                 <div>
-                    <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400">Descripción</h3>
-                    <p class="text-gray-900 dark:text-gray-100">{{ $vacante->descripcion }}</p>
+                    <h3 class="text-[15px] font-medium text-itsc-slate-900">Descripción</h3>
+                    <p class="text-sm leading-6 text-itsc-slate-700">{{ $vacante->descripcion }}</p>
                 </div>
 
                 @if ($vacante->requisitos)
                     <div>
-                        <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400">Requisitos</h3>
-                        <p class="text-gray-900 dark:text-gray-100">{{ $vacante->requisitos }}</p>
+                        <h3 class="text-[15px] font-medium text-itsc-slate-900">Requisitos</h3>
+                        <p class="text-sm leading-6 text-itsc-slate-700">{{ $vacante->requisitos }}</p>
                     </div>
                 @endif
 
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div><span class="text-gray-500">Tipo:</span> {{ ucfirst(str_replace('_', ' ', $vacante->tipo_empleo)) }}</div>
-                    <div><span class="text-gray-500">Modalidad:</span> {{ ucfirst($vacante->modalidad) }}</div>
-                    <div><span class="text-gray-500">Ubicación:</span> {{ $vacante->ubicacion ?? '—' }}</div>
-                    <div><span class="text-gray-500">Cierra:</span> {{ $vacante->fecha_cierre?->format('d/m/Y') ?? '—' }}</div>
+                <div class="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                    <div><span class="text-itsc-slate-500">Tipo:</span> {{ ucfirst(str_replace('_', ' ', $vacante->tipo_empleo)) }}</div>
+                    <div><span class="text-itsc-slate-500">Modalidad:</span> {{ ucfirst($vacante->modalidad) }}</div>
+                    <div><span class="text-itsc-slate-500">Ubicación:</span> {{ $vacante->ubicacion ?? '—' }}</div>
+                    <div><span class="text-itsc-slate-500">Cierra:</span> {{ $vacante->fecha_cierre?->format('d/m/Y') ?? '—' }}</div>
                 </div>
 
-                <hr class="dark:border-gray-700">
+                <hr class="border-itsc-slate-100">
 
-                <section class="rounded-lg border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-900 dark:bg-indigo-950/30">
-                    <h3 class="font-semibold text-indigo-950 dark:text-indigo-100">Asistente Inteligente de Empleabilidad</h3>
+                <section class="rounded-xl border border-itsc-slate-100 bg-itsc-slate-50 p-4">
+                    <h3 class="text-[15px] font-medium text-itsc-slate-900">Asistente inteligente de empleabilidad</h3>
                     @if (! $dirigidaASuCarrera)
-                        <p class="mt-1 text-sm text-indigo-900 dark:text-indigo-200">
+                        <p class="mt-1 text-sm text-itsc-slate-700">
                             Esta vacante no está dirigida a tu carrera, por lo que no se puede analizar desde tu perfil.
                         </p>
                     @else
-                        <p class="mt-1 text-sm text-indigo-900 dark:text-indigo-200">
+                        <p class="mt-1 text-sm text-itsc-slate-700">
                             Recibirás una comparación orientativa y una propuesta editable de CV. No es una probabilidad de contratación.
                         </p>
-                        <p class="mt-2 text-sm text-indigo-900 dark:text-indigo-200">
+                        <p class="mt-2 text-sm text-itsc-slate-700">
                             @if ($tieneCvPerfil)
                                 Puedes subir otro PDF o usar el de tu perfil. Si ese CV no es legible y tu perfil tiene información suficiente, el análisis continuará solo con tu perfil.
                             @elseif ($puedeAnalizarSinCv)
@@ -64,7 +67,7 @@
                                 Sube un PDF para analizar esta vacante. También puedes completar tu perfil para analizarlo sin CV.
                             @endif
                         </p>
-                        <div class="mt-3 rounded-md bg-white/70 p-3 text-xs leading-5 text-gray-700 dark:bg-gray-900/60 dark:text-gray-300">
+                        <div class="mt-3 rounded-lg border border-itsc-slate-100 bg-white p-3 text-xs leading-5 text-itsc-slate-700">
                             Al continuar se enviarán a un servicio externo (Google Gemini) el texto extraído del CV y los datos profesionales de tu perfil (formación, experiencia, habilidades, idiomas y certificaciones), junto con los datos de esta vacante.
                             Se omiten nombre, correo, teléfono, matrícula y URLs; también se redactan datos de contacto detectados en el CV. Un PDF que adjuntes se utilizará solo para este análisis y no se guardará en tu perfil.
                             Google puede conservar solicitudes y respuestas hasta 55 días para monitoreo de abuso.
@@ -72,17 +75,17 @@
                         <form id="cv-analysis-form" method="POST" action="{{ route('estudiante.vacantes.analizar-cv', $vacante) }}" enctype="multipart/form-data" class="mt-4">
                             @csrf
                             <input type="hidden" name="consent_version" value="{{ \App\Http\Controllers\Estudiante\EmployabilityAnalysisController::CONSENT_VERSION }}">
-                            <label for="analysis-cv" class="block text-sm font-medium text-gray-800 dark:text-gray-200">
+                            <label for="analysis-cv" class="block text-xs text-itsc-slate-500">
                                 PDF para este análisis ({{ $tieneCvPerfil || $puedeAnalizarSinCv ? 'opcional' : 'requerido' }}, máximo 2 MB)
                             </label>
                             <input id="analysis-cv" type="file" name="cv" accept="application/pdf,.pdf" @unless ($tieneCvPerfil || $puedeAnalizarSinCv) required @endunless
-                                class="mt-1 block w-full text-sm text-gray-700 dark:text-gray-300">
+                                class="mt-1 block min-h-10 w-full rounded-lg border border-itsc-slate-300 bg-white px-3 py-2 text-sm text-itsc-slate-700">
                             <x-input-error :messages="$errors->get('cv')" class="mt-2" />
-                            <label class="flex items-start gap-2 text-sm text-gray-800 dark:text-gray-200">
-                                <input type="checkbox" name="consent" value="1" required class="mt-1 rounded border-gray-300 text-indigo-600 shadow-sm">
+                            <label class="flex items-start gap-2 text-sm text-itsc-slate-700">
+                                <input type="checkbox" name="consent" value="1" required class="mt-1 rounded border-itsc-slate-300 text-itsc-slate-700 shadow-sm focus:ring-itsc-red-600/20">
                                 <span>Consiento que se envíen a Gemini el contenido de mi CV y los datos profesionales de mi perfil indicados arriba, sin datos de contacto, para generar este análisis.</span>
                             </label>
-                            <button type="submit" class="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-md bg-indigo-700 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 sm:w-auto">
+                            <button type="submit" class="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-itsc-slate-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-itsc-slate-900 sm:w-auto">
                                 Analizar mi CV y perfil con IA
                             </button>
                         </form>
@@ -128,7 +131,7 @@
                 <hr class="dark:border-gray-700">
 
                 @if ($yaPostulado)
-                    <div class="p-4 bg-blue-100 text-blue-800 rounded-md">
+                    <div class="rounded-xl border border-itsc-slate-100 bg-itsc-slate-50 p-4 text-sm text-itsc-slate-700">
                         Ya te has postulado a esta vacante. Revisa el estado en "Mis Postulaciones".
                     </div>
                 @else
@@ -142,13 +145,13 @@
                                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Adjunta tu CV para completar la postulación.</p>
                             @endif
                             <input id="cv" type="file" name="cv" accept="application/pdf,.pdf" @unless ($tieneCvPerfil) required @endunless
-                                class="block mt-1 w-full text-sm text-gray-700 dark:text-gray-300">
+                                class="block min-h-10 mt-1 w-full rounded-lg border border-itsc-slate-300 bg-white px-3 py-2 text-sm text-itsc-slate-700">
                             <x-input-error :messages="$errors->get('cv')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="carta_presentacion" :value="__('Carta de presentación (opcional)')" />
                             <textarea id="carta_presentacion" name="carta_presentacion" rows="4"
-                                class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 rounded-md shadow-sm">{{ old('carta_presentacion') }}</textarea>
+                                class="block mt-1 w-full rounded-lg border border-itsc-slate-300 bg-white px-3 py-2 text-sm text-itsc-slate-900 focus:border-itsc-red-600 focus:ring-4 focus:ring-itsc-red-600/15">{{ old('carta_presentacion') }}</textarea>
                         </div>
                         <x-primary-button class="mt-4">{{ __('Postularme') }}</x-primary-button>
                     </form>

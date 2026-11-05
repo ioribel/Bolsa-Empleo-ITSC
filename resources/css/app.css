@@ -12,6 +12,92 @@
     color: #6B7280;
 }
 
+.page-heading,
+.page-heading h1,
+.page-heading h2 {
+    color: #6B7280;
+}
+
 [x-cloak] {
     display: none !important;
+}
+
+.profile-view :is(button, input, select, textarea, a):focus-visible {
+    outline: 2px solid #C8102E;
+    outline-offset: 2px;
+}
+
+.profile-view :is(input, select, textarea):focus-visible {
+    border-color: #C8102E;
+}
+
+.itsc-page {
+    background-color: #F4F6F8;
+    color: #1B242C;
+}
+
+.itsc-page .itsc-surface {
+    border: 1px solid #E3E8ED;
+    border-radius: 0.75rem;
+    background-color: #fff;
+    box-shadow: none;
+}
+
+.itsc-page .itsc-primary {
+    border-radius: 0.5rem;
+    background-color: #2E3B47;
+    color: #fff;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: normal;
+    transition: background-color 150ms ease-in-out;
+}
+
+.itsc-page .itsc-primary:hover,
+.itsc-page .itsc-primary:focus {
+    background-color: #1B242C;
+}
+
+.itsc-page :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea) {
+    border-color: #B9C2CB;
+    border-radius: 0.5rem;
+    background-color: #fff;
+    color: #1B242C !important;
+}
+
+.itsc-page :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea)::placeholder {
+    color: #6B7280;
+    opacity: 1;
+}
+
+.itsc-page label {
+    color: #2E3B47;
+}
+
+.itsc-page dt {
+    color: #4A5968;
+}
+
+.itsc-page .itsc-count {
+    color: #2E3B47;
+    font-weight: 500;
+}
+
+.itsc-page :is(input, select, textarea, button, a):focus-visible {
+    outline: 2px solid #C8102E;
+    outline-offset: 2px;
+}
+
+.itsc-page .itsc-surface thead {
+    background-color: #F4F6F8;
+}
+
+.itsc-page .itsc-surface th {
+    color: #4A5968;
+    font-weight: 500;
+    text-transform: none;
+}
+
+.itsc-page .itsc-surface tbody {
+    color: #1B242C;
 }

@@ -1,12 +1,12 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="break-words font-semibold text-xl text-gray-700 leading-tight">
+        <h1 class="break-words font-semibold text-xl text-gray-700 leading-tight">
             Análisis de CV: {{ $vacante->titulo }}
-        </h2>
+        </h1>
     </x-slot>
 
-    <div class="py-6 sm:py-10">
-        <main class="mx-auto max-w-5xl space-y-5 px-4 sm:px-6 lg:px-8">
+    <div class="itsc-page py-6 sm:py-10">
+        <section class="mx-auto max-w-5xl space-y-5 px-4 sm:px-6 lg:px-8">
             <div class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
                 Este análisis es orientativo, puede contener errores y no representa una probabilidad de contratación.
                 Revisa las evidencias y verifica que cada sugerencia describa tu experiencia real. El informe no se guarda como historial.
@@ -18,7 +18,7 @@
                 </div>
             @endif
 
-            <section class="rounded-lg border border-teal-200 bg-teal-50 p-4 text-sm text-teal-950 dark:border-teal-900 dark:bg-teal-950/30 dark:text-teal-100">
+            <section class="itsc-surface p-4 text-sm">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <h3 class="font-semibold">Completitud de tu perfil</h3>
                     <span class="font-bold">{{ $analysis['profile_completion_percentage'] }}%</span>
@@ -35,8 +35,8 @@
                 <a href="{{ route('estudiante.perfil.edit') }}" class="mt-2 inline-flex font-semibold underline">Editar mi perfil</a>
             </section>
 
-            <section class="rounded-lg bg-white p-5 shadow-sm dark:bg-gray-800 sm:p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">A. Compatibilidad con la vacante</h3>
+            <section class="itsc-surface p-4 sm:p-5">
+                <h3 class="text-[15px] font-medium text-itsc-slate-900">A. Compatibilidad con la vacante</h3>
                 @if ($analysis['compatibility_percentage'] === null)
                     <p class="mt-3 text-sm text-gray-700 dark:text-gray-300">
                         No hay requisitos textuales suficientes para calcular un porcentaje verificable.
@@ -73,8 +73,8 @@
                 @endif
             </section>
 
-            <section class="rounded-lg bg-white p-5 shadow-sm dark:bg-gray-800 sm:p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">B. Información identificada en tu CV y perfil</h3>
+            <section class="itsc-surface p-4 sm:p-5">
+                <h3 class="text-[15px] font-medium text-itsc-slate-900">B. Información identificada en tu CV y perfil</h3>
                 @php
                     $sectionLabels = [
                         'education' => 'Formación académica',
@@ -110,8 +110,8 @@
                 </div>
             </section>
 
-            <section class="rounded-lg bg-white p-5 shadow-sm dark:bg-gray-800 sm:p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">C. Requisitos no identificados</h3>
+            <section class="itsc-surface p-4 sm:p-5">
+                <h3 class="text-[15px] font-medium text-itsc-slate-900">C. Requisitos no identificados</h3>
                 @forelse ($analysis['not_identified'] as $item)
                     <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">• {{ $item['requirement'] }}</p>
                 @empty
@@ -122,8 +122,8 @@
                 <p class="mt-3 text-xs text-gray-500">“No identificado” significa que no apareció evidencia en el CV ni en el perfil, no que carezcas de esa competencia.</p>
             </section>
 
-            <section class="rounded-lg bg-white p-5 shadow-sm dark:bg-gray-800 sm:p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">D. Recomendaciones personalizadas</h3>
+            <section class="itsc-surface p-4 sm:p-5">
+                <h3 class="text-[15px] font-medium text-itsc-slate-900">D. Recomendaciones personalizadas</h3>
                 @forelse ($analysis['recommendations'] as $recommendation)
                     <div class="mt-3">
                         <p class="text-xs font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
@@ -143,8 +143,8 @@
                 @endforelse
             </section>
 
-            <section class="rounded-lg bg-white p-5 shadow-sm dark:bg-gray-800 sm:p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">E. Perfil profesional sugerido</h3>
+            <section class="itsc-surface p-4 sm:p-5">
+                <h3 class="text-[15px] font-medium text-itsc-slate-900">E. Perfil profesional sugerido</h3>
                 @if ($analysis['suggested_profile']['text'] !== '')
                     <p class="mt-3 whitespace-pre-line text-sm leading-6 text-gray-800 dark:text-gray-200">{{ $analysis['suggested_profile']['text'] }}</p>
                     <ul class="mt-3 list-inside list-disc text-xs text-gray-500">
@@ -160,8 +160,8 @@
                 @endif
             </section>
 
-            <section class="rounded-lg border border-indigo-200 bg-indigo-50 p-5 shadow-sm dark:border-indigo-900 dark:bg-indigo-950/30 sm:p-6">
-                <h3 class="text-lg font-semibold text-indigo-950 dark:text-indigo-100">Revisar y descargar una versión adaptada</h3>
+            <section class="itsc-surface p-4 sm:p-5">
+                <h3 class="text-[15px] font-medium text-itsc-slate-900">Revisar y descargar una versión adaptada</h3>
                 <p class="mt-2 text-sm text-indigo-950 dark:text-indigo-200">
                     Edita la propuesta antes de descargarla. Las citas muestran de dónde proviene cada dato; confirma que el texto final sea verdadero.
                     El PDF se genera en esta solicitud y no se guarda en el servidor.
@@ -231,6 +231,6 @@
             <a href="{{ route('estudiante.vacantes.show', $vacante) }}" class="inline-flex text-sm font-medium text-indigo-700 underline dark:text-indigo-300">
                 Volver a la vacante
             </a>
-        </main>
+        </section>
     </div>
 </x-app-layout>

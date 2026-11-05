@@ -32,6 +32,16 @@ class EmpresaController extends Controller
         return view('admin.empresas.index', compact('empresas', 'filters'));
     }
 
+    public function show(Empresa $empresa)
+    {
+        $empresa->load([
+            'user',
+            'vacantes' => fn ($query) => $query->with('carreras')->latest(),
+        ]);
+
+        return view('admin.empresas.show', compact('empresa'));
+    }
+
     public function aprobar(string $id)
     {
         $empresa = Empresa::findOrFail($id);

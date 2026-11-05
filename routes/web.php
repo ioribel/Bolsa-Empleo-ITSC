@@ -55,6 +55,7 @@ Route::middleware(['auth', 'rol:admin'])->prefix('admin')->name('admin.')->group
     })->name('dashboard');
 
     Route::get('empresas', [EmpresaController::class, 'index'])->name('empresas.index');
+    Route::get('empresas/{empresa}', [EmpresaController::class, 'show'])->name('empresas.show');
     Route::get('vacantes', [VacanteController::class, 'index'])->name('vacantes.index');
     Route::patch('empresas/{empresa}/aprobar', [EmpresaController::class, 'aprobar'])->name('empresas.aprobar');
     Route::patch('empresas/{empresa}/bloquear', [EmpresaController::class, 'bloquear'])->name('empresas.bloquear');
@@ -79,6 +80,9 @@ Route::middleware(['auth', 'rol:empresa'])->prefix('empresa')->name('empresa.')-
             'pendientesRevisar' => Postulacion::whereHas('vacante', fn ($q) => $q->where('empresa_id', $empresa->id))->where('estado', 'recibida')->count(),
         ]);
     })->name('dashboard');
+
+    Route::get('perfil', [App\Http\Controllers\Empresa\PerfilController::class, 'edit'])->name('perfil.edit');
+    Route::patch('perfil', [App\Http\Controllers\Empresa\PerfilController::class, 'update'])->name('perfil.update');
 
     Route::resource('vacantes', App\Http\Controllers\Empresa\VacanteController::class)
         ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
@@ -115,6 +119,7 @@ Route::middleware(['auth', 'rol:estudiante'])->prefix('estudiante')->name('estud
         ]);
     })->name('dashboard');
 
+    Route::get('empresas/{empresa}', [App\Http\Controllers\Estudiante\EmpresaController::class, 'show'])->name('empresas.show');
     Route::get('vacantes', [App\Http\Controllers\Estudiante\VacanteController::class, 'index'])->name('vacantes.index');
     Route::get('vacantes/{vacante}', [App\Http\Controllers\Estudiante\VacanteController::class, 'show'])->name('vacantes.show');
     Route::post('vacantes/{vacante}/analisis-cv', [EmployabilityAnalysisController::class, 'analyze'])

@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <title>Currículum adaptado</title>
     <style>
-        body { color: #1f2937; font-family: DejaVu Sans, sans-serif; font-size: 11pt; line-height: 1.5; }
-        h1 { color: #042c53; font-size: 22pt; margin-bottom: 2pt; }
-        h2 { border-bottom: 1px solid #d1d5db; color: #042c53; font-size: 13pt; margin: 18pt 0 6pt; padding-bottom: 3pt; }
+        body { color: #1B242C; font-family: DejaVu Sans, sans-serif; font-size: 11pt; line-height: 1.5; }
+        h1 { color: #2E3B47; font-size: 22pt; margin-bottom: 2pt; }
+        h2 { border-bottom: 1px solid #E3E8ED; color: #2E3B47; font-size: 13pt; margin: 18pt 0 6pt; padding-bottom: 3pt; }
         p { margin: 4pt 0; }
-        .meta { color: #4b5563; font-size: 9pt; }
-        .notice { border-top: 1px solid #d1d5db; color: #6b7280; font-size: 8pt; margin-top: 24pt; padding-top: 8pt; }
+        .meta { color: #4A5968; font-size: 9pt; }
+        .notice { border-top: 1px solid #E3E8ED; color: #4A5968; font-size: 8pt; margin-top: 24pt; padding-top: 8pt; }
     </style>
 </head>
 <body>

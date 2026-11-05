@@ -1,8 +1,8 @@
 <x-guest-layout>
 
-    <div class="mb-4 text-lg font-semibold text-gray-500 dark:text-gray-500">
+    <h1 class="mb-4 text-lg font-semibold text-gray-500 dark:text-gray-500">
         {{ __('Registro de Estudiante/Egresado') }}
-    </div>
+    </h1>
     <form method="POST" action="{{ route('register') }}">
         @csrf
 

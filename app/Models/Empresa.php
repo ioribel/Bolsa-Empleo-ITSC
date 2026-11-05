@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Empresa extends Model
 {
-    //
     protected $fillable = ['user_id', 'nombre_empresa', 'rnc', 'sector', 'descripcion', 'telefono', 'sitio_web', 'logo_path', 'estado'];
 
     public function user()
@@ -17,5 +16,18 @@ class Empresa extends Model
     public function vacantes()
     {
         return $this->hasMany(Vacante::class);
+    }
+
+    public function vacantesPublicadas()
+    {
+        return $this->vacantes()->where('estado', 'publicada');
+    }
+
+    public function vacantesPublicadasParaCarrera(int $carreraId)
+    {
+        return $this->vacantesPublicadas()
+            ->whereHas('carreras', fn ($query) => $query->where('carreras.id', $carreraId))
+            ->with('carreras')
+            ->latest();
     }
 }

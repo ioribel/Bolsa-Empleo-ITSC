@@ -8,13 +8,16 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="antialiased bg-white">
+    <a href="#main-content" class="sr-only z-50 rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#042C53] shadow focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:ring-2 focus:ring-[#A32D2D] focus:ring-offset-2">
+        Saltar al contenido
+    </a>
 
     <!-- Barra superior -->
     <nav class="bg-[#042C53]">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <a href="/" aria-label="Bolsa de Empleo ITSC" class="shrink-0">
-                    <img src="{{ asset('images/logo-itsc.png') }}" alt="Logo del ITSC" class="h-12 w-12 rounded-md object-contain">
+                    <img src="{{ asset('images/logo-itsc.png') }}" alt="Logo del ITSC" width="48" height="48" class="h-12 w-12 rounded-md object-contain">
                 </a>
                 <div class="flex items-center gap-4">
                     @auth
@@ -29,8 +32,9 @@
     </nav>
 
     <!-- Hero -->
+    <main id="main-content" tabindex="-1">
     <section class="relative isolate overflow-hidden bg-[#042C53]">
-        <img src="{{ asset('images/itsclanding.jpeg') }}" alt="" aria-hidden="true"
+        <img src="{{ asset('images/itsclanding.jpeg') }}" alt="" aria-hidden="true" width="1300" height="731" fetchpriority="high"
              class="absolute inset-0 h-full w-full object-cover object-center">
         <div class="absolute inset-0 bg-[#042C53]/75" aria-hidden="true"></div>
         <div class="relative z-10 max-w-5xl mx-auto px-6 py-24 text-center">
@@ -79,6 +83,7 @@
             </div>
         </div>
     </section>
+    </main>
 
     <!-- Footer -->
     <footer class="bg-gray-50 border-t border-gray-200">

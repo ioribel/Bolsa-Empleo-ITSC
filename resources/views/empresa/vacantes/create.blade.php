@@ -1,13 +1,13 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-[#696969] leading-tight">
-            {{ __('Nueva Vacante') }}
-        </h2>
+        <h1 class="font-semibold text-xl text-[#696969] leading-tight">
+            {{ __('Nueva vacante') }}
+        </h1>
     </x-slot>
 
-    <div class="py-6 sm:py-12">
+    <div class="itsc-page py-6 sm:py-10">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-4 sm:p-6">
+            <div class="itsc-surface p-4 sm:p-5">
                 <form method="POST" action="{{ route('empresa.vacantes.store') }}">
                     @csrf
 
@@ -76,8 +76,8 @@
                         <x-input-error :messages="$errors->get('fecha_cierre')" class="mt-2" />
                     </div>
 
-                    <div class="mt-4">
-                        <x-input-label :value="__('Carreras dirigidas')" class="form-label-light" />
+                    <fieldset class="mt-4">
+                        <legend class="form-label-light">{{ __('Carreras dirigidas') }}</legend>
                         <div class="mt-2 grid grid-cols-1 gap-2 max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-700 rounded-md p-3 sm:grid-cols-2">
                             @foreach ($carreras as $carrera)
                                 <label class="flex items-center gap-2 text-sm form-label-light">
@@ -89,11 +89,11 @@
                             @endforeach
                         </div>
                         <x-input-error :messages="$errors->get('carreras')" class="mt-2" />
-                    </div>
+                    </fieldset>
 
-                    <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
-                        <a href="{{ route('empresa.vacantes.index') }}" class="text-center text-sm text-gray-600 dark:text-gray-400 underline sm:mr-4">Cancelar</a>
-                        <x-primary-button class="w-full justify-center sm:w-auto">{{ __('Guardar borrador') }}</x-primary-button>
+                    <div class="mt-6 flex flex-col-reverse gap-3 border-t border-itsc-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-end">
+                        <a href="{{ route('empresa.vacantes.index') }}" class="inline-flex min-h-10 items-center justify-center rounded-lg border border-itsc-slate-300 bg-white px-3.5 text-[13px] font-medium text-itsc-slate-700 transition-colors hover:bg-itsc-slate-50 sm:mr-2">Cancelar</a>
+                        <x-primary-button class="itsc-primary w-full justify-center sm:w-auto">{{ __('Guardar borrador') }}</x-primary-button>
                     </div>
                 </form>
             </div>

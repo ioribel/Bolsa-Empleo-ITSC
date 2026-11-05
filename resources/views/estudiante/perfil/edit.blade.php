@@ -1,21 +1,24 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-700 dark:text-gray-200 leading-tight">
-            {{ __('Mi perfil profesional') }}
-        </h2>
+        <h1 class="page-heading text-xl font-medium leading-tight">{{ __('Mi perfil profesional') }}</h1>
     </x-slot>
 
-    <div class="py-6 sm:py-10">
-        <div class="mx-auto max-w-5xl space-y-5 px-3 sm:px-6 lg:px-8">
+    <div class="profile-view bg-itsc-slate-50 px-3 py-4 sm:px-6 sm:py-6">
+        <div class="mx-auto max-w-4xl space-y-3 rounded-xl bg-itsc-slate-50 p-1 sm:p-2">
             @if (session('status'))
-                <div class="rounded-md bg-green-100 p-4 text-green-800" role="status">{{ session('status') }}</div>
+                <div x-data="{ visible: true }" x-init="setTimeout(() => visible = false, 5000)" x-show="visible"
+                    role="status" aria-live="polite" class="fixed right-4 top-4 z-50 rounded-xl border border-itsc-slate-100 bg-white px-4 py-3 text-sm text-itsc-slate-700">
+                    {{ str_contains(mb_strtolower(session('status')), 'actualiz') ? 'Cambios guardados' : session('status') }}
+                </div>
             @endif
             @if (session('error'))
-                <div class="rounded-md bg-red-100 p-4 text-red-800" role="alert">{{ session('error') }}</div>
+                <div role="alert" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                    {{ session('error') }}
+                </div>
             @endif
             @if ($errors->any())
-                <div class="rounded-md bg-red-50 p-4 text-sm text-red-800" role="alert">
-                    <p class="font-semibold">Revisa los datos del formulario:</p>
+                <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+                    <p class="font-medium">Revisa los datos del formulario:</p>
                     <ul class="mt-2 list-inside list-disc space-y-1">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
@@ -24,109 +27,150 @@
                 </div>
             @endif
 
-            <section class="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800 sm:p-6">
-                <div class="flex items-center justify-between gap-4">
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Completitud del perfil</h3>
-                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">Un perfil completo ayuda a las empresas a conocer tu experiencia.</p>
-                    </div>
-                    <span class="shrink-0 text-lg font-bold text-[#042C53] dark:text-white">{{ $estudiante->porcentajeCompletitud() }}%</span>
+            @php($completitud = $estudiante->porcentajeCompletitud())
+            @php($pendientes = $estudiante->perfilPendienteCompletar())
+            @php($destinoPendiente = match ($pendientes[0] ?? null) {
+                'Agregar un titular profesional' => '#titular',
+                'Escribir un resumen profesional' => '#resumen',
+                'Cargar el currículum' => '#cv',
+                'Agregar formación académica' => '#formaciones',
+                'Agregar experiencia o pasantía' => '#experiencia-laboral',
+                'Agregar al menos 3 habilidades' => '#habilidades',
+                'Agregar un idioma' => '#idiomas',
+                'Agregar al menos un enlace profesional' => '#linkedin_url',
+                default => '#formaciones',
+            })
+
+            <x-profile-card class="flex flex-col items-center gap-4 sm:flex-row">
+                <x-profile-progress-ring :percentage="$completitud" />
+                <div class="min-w-0 flex-1 text-center sm:text-left">
+                    <h2 class="text-[15px] font-medium text-itsc-slate-900">Completitud del perfil</h2>
+                    <p class="mt-1 text-sm text-itsc-slate-500">Un perfil completo ayuda a las empresas a conocer tu experiencia.</p>
                 </div>
-                <div class="mt-3 h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700" role="progressbar"
-                    aria-label="Completitud del perfil" aria-valuemin="0" aria-valuemax="100"
-                    aria-valuenow="{{ $estudiante->porcentajeCompletitud() }}">
-                    <div class="h-full rounded-full bg-[#042C53] transition-all"
-                        style="width: {{ $estudiante->porcentajeCompletitud() }}%"></div>
-                </div>
-                @if ($estudiante->perfilPendienteCompletar())
-                    <p class="mt-3 text-sm text-gray-600 dark:text-gray-300">
-                        Para completar tu perfil: {{ implode('; ', $estudiante->perfilPendienteCompletar()) }}.
-                    </p>
+                @if (count($pendientes))
+                    <a href="{{ $destinoPendiente }}" class="inline-flex min-h-10 items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-sm text-amber-800 transition-colors hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-200">
+                        <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9 1.8 18.6A1.6 1.6 0 0 0 3.2 21h17.6a1.6 1.6 0 0 0 1.4-2.4L13.7 3.9a1.9 1.9 0 0 0-3.4 0Z" />
+                        </svg>
+                        <span>Falta: {{ $pendientes[0] }}</span>
+                    </a>
                 @else
-                    <p class="mt-3 text-sm font-medium text-green-700">¡Tu perfil cumple todos los criterios de completitud!</p>
+                    <span class="rounded-full bg-amber-50 px-3 py-1.5 text-sm text-amber-800">Perfil completo</span>
                 @endif
-            </section>
+            </x-profile-card>
 
-            <section class="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800 sm:p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Datos básicos y enlaces</h3>
-                <div class="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-                    <p><span class="text-gray-500">Nombre:</span> {{ $estudiante->user->name }}</p>
-                    <p><span class="text-gray-500">Correo:</span> {{ $estudiante->user->email }}</p>
-                    <p><span class="text-gray-500">Matrícula:</span> {{ $estudiante->matricula }}</p>
-                    <p><span class="text-gray-500">Carrera:</span> {{ $estudiante->carrera->nombre }}</p>
+            <x-profile-card>
+                <x-slot name="header">
+                    <div class="flex items-center gap-2">
+                        <svg class="h-[18px] w-[18px] text-itsc-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 20v-1.5a4.5 4.5 0 0 0-4.5-4.5h-3A4.5 4.5 0 0 0 4 18.5V20m14-11a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM12 5.5a4 4 0 1 0-8 0 4 4 0 0 0 8 0Zm6 5a4.5 4.5 0 0 1 4 4.5V17" />
+                        </svg>
+                        <h2 class="text-[15px] font-medium text-itsc-slate-900">Datos básicos y enlaces</h2>
+                    </div>
+                </x-slot>
+                <x-slot name="actions">
+                    <span class="inline-flex items-center gap-1 text-xs text-itsc-slate-500">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                            <rect x="4" y="10" width="16" height="11" rx="2" /><path stroke-linecap="round" stroke-linejoin="round" d="M8 10V7a4 4 0 1 1 8 0v3" />
+                        </svg>
+                        Campos de la institución
+                    </span>
+                </x-slot>
+
+                <div class="mb-5 flex items-center gap-3">
+                    <div class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-itsc-slate-700 text-sm font-medium text-white" aria-hidden="true">
+                        {{ collect(explode(' ', trim($estudiante->user->name)))->filter()->take(2)->map(fn ($parte) => mb_substr($parte, 0, 1))->implode('') }}
+                    </div>
+                    <div class="min-w-0">
+                        <p class="truncate text-base font-medium text-itsc-slate-900">{{ $estudiante->user->name }}</p>
+                        <p class="truncate text-sm text-itsc-slate-500">{{ $estudiante->carrera->nombre }} · {{ $estudiante->matricula }}</p>
+                    </div>
                 </div>
 
-                <form method="POST" action="{{ route('estudiante.perfil.update') }}" enctype="multipart/form-data" class="mt-5 space-y-4">
+                <div class="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <x-profile-input label="Correo electrónico" id="perfil-correo" :value="$estudiante->user->email" readonly>
+                        <x-slot name="icon">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                                <rect x="3" y="5" width="18" height="14" rx="2" /><path stroke-linecap="round" stroke-linejoin="round" d="m4 7 8 6 8-6" />
+                            </svg>
+                        </x-slot>
+                    </x-profile-input>
+                    <x-profile-input label="Matrícula" id="perfil-matricula" :value="$estudiante->matricula" readonly>
+                        <x-slot name="icon">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                                <rect x="4" y="3" width="16" height="18" rx="2" /><path stroke-linecap="round" stroke-linejoin="round" d="M8 8h8M8 12h8M8 16h4" />
+                            </svg>
+                        </x-slot>
+                    </x-profile-input>
+                </div>
+
+                <form method="POST" action="{{ route('estudiante.perfil.update') }}" enctype="multipart/form-data" class="space-y-4"
+                    x-data="{ saving: false, summaryLength: {{ mb_strlen(old('resumen', $estudiante->resumen ?? '')) }} }"
+                    @submit="saving = true">
                     @csrf
-                    <div>
-                        <x-input-label for="titular" value="Titular profesional" />
-                        <x-text-input id="titular" name="titular" maxlength="120" class="mt-1 block w-full"
-                            placeholder="Ej. Estudiante de Software, 8vo cuatrimestre"
-                            :value="old('titular', $estudiante->titular)" />
-                        <x-input-error :messages="$errors->get('titular')" class="mt-2" />
+                    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        <x-profile-input id="titular" name="titular" label="Titular profesional" maxlength="120"
+                            placeholder="Ej. Estudiante de software, 8vo cuatrimestre"
+                            :value="old('titular', $estudiante->titular)" :error="$errors->first('titular')" />
+                        <x-profile-input id="telefono" name="telefono" label="Teléfono"
+                            :value="old('telefono', $estudiante->telefono)" :error="$errors->first('telefono')" />
                     </div>
 
                     <div>
-                        <x-input-label for="telefono" value="Teléfono" />
-                        <x-text-input id="telefono" name="telefono" class="mt-1 block w-full"
-                            :value="old('telefono', $estudiante->telefono)" />
-                        <x-input-error :messages="$errors->get('telefono')" class="mt-2" />
+                        <x-profile-input id="resumen" name="resumen" label="Resumen profesional" as="textarea" rows="3" maxlength="1000"
+                            placeholder="Comparte un resumen de tu perfil profesional" :value="old('resumen', $estudiante->resumen)"
+                            :error="$errors->first('resumen')" x-on:input="summaryLength = $event.target.value.length" />
+                        <p class="mt-1 text-right text-[11px] text-itsc-slate-500"><span x-text="summaryLength"></span> / 1000</p>
                     </div>
 
-                    <div>
-                        <x-input-label for="resumen" value="Resumen profesional" />
-                        <textarea id="resumen" name="resumen" rows="4" maxlength="1000"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">{{ old('resumen', $estudiante->resumen) }}</textarea>
-                        <x-input-error :messages="$errors->get('resumen')" class="mt-2" />
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div>
-                            <x-input-label for="linkedin_url" value="LinkedIn" />
-                            <x-text-input id="linkedin_url" name="linkedin_url" type="url" class="mt-1 block w-full"
-                                placeholder="https://www.linkedin.com/in/tu-perfil"
-                                :value="old('linkedin_url', $estudiante->linkedin_url)" />
-                            <x-input-error :messages="$errors->get('linkedin_url')" class="mt-2" />
-                        </div>
-                        <div>
-                            <x-input-label for="github_url" value="GitHub" />
-                            <x-text-input id="github_url" name="github_url" type="url" class="mt-1 block w-full"
-                                placeholder="https://github.com/usuario"
-                                :value="old('github_url', $estudiante->github_url)" />
-                            <x-input-error :messages="$errors->get('github_url')" class="mt-2" />
-                        </div>
-                        <div class="sm:col-span-2">
-                            <x-input-label for="portafolio_url" value="Portafolio (HTTPS)" />
-                            <x-text-input id="portafolio_url" name="portafolio_url" type="url" class="mt-1 block w-full"
+                    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        <x-profile-input id="linkedin_url" name="linkedin_url" type="url" label="LinkedIn"
+                            placeholder="https://www.linkedin.com/in/tu-perfil"
+                            :value="old('linkedin_url', $estudiante->linkedin_url)" :error="$errors->first('linkedin_url')" />
+                        <x-profile-input id="github_url" name="github_url" type="url" label="GitHub"
+                            placeholder="https://github.com/usuario"
+                            :value="old('github_url', $estudiante->github_url)" :error="$errors->first('github_url')" />
+                        <div class="md:col-span-2">
+                            <x-profile-input id="portafolio_url" name="portafolio_url" type="url" label="Portafolio"
                                 placeholder="https://tuportafolio.com"
-                                :value="old('portafolio_url', $estudiante->portafolio_url)" />
-                            <x-input-error :messages="$errors->get('portafolio_url')" class="mt-2" />
+                                :value="old('portafolio_url', $estudiante->portafolio_url)" :error="$errors->first('portafolio_url')" />
                         </div>
                     </div>
 
                     <div>
-                        <x-input-label for="cv" value="Currículum (PDF, máximo 2 MB)" />
+                        <label for="cv" class="mb-1 block text-xs text-itsc-slate-500">Currículum (PDF, máximo 2 MB)</label>
                         @if ($estudiante->cv_path)
-                            <p class="mt-1 break-words text-sm text-gray-600 dark:text-gray-400">
+                            <p class="mb-2 break-words text-sm text-itsc-slate-500">
                                 @if ($cvDetails)
                                     Archivo actual: {{ $cvDetails['name'] }} ({{ number_format($cvDetails['size'] / 1024, 0) }} KB).
                                 @else
                                     Hay un currículum registrado, pero el archivo no está disponible.
                                 @endif
-                                <a href="{{ route('estudiante.perfil.cv') }}" target="_blank" rel="noopener" class="ml-1 underline text-indigo-600">Ver CV</a>
+                                <a href="{{ route('estudiante.perfil.cv') }}" target="_blank" rel="noopener" class="ml-1 text-itsc-red-600 hover:text-itsc-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-itsc-red-600">Ver CV</a>
                             </p>
                         @endif
                         <input id="cv" type="file" name="cv" accept="application/pdf"
-                            class="mt-1 block w-full text-sm text-gray-700 dark:text-gray-300">
-                        <x-input-error :messages="$errors->get('cv')" class="mt-2" />
+                            @if ($errors->first('cv')) aria-describedby="cv-error" @endif
+                            class="block min-h-10 w-full rounded-lg border border-itsc-slate-300 bg-white px-3 py-2 text-sm text-itsc-slate-700 file:mr-3 file:border-0 file:bg-itsc-slate-50 file:text-itsc-slate-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-itsc-red-600/15">
+                        @if ($errors->first('cv'))
+                            <p id="cv-error" role="alert" class="mt-1 text-xs text-red-800">{{ $errors->first('cv') }}</p>
+                        @endif
                     </div>
 
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                    <div class="flex flex-col-reverse gap-2 border-t border-itsc-slate-100 pt-4 sm:flex-row sm:justify-end">
+                        <a href="{{ route('estudiante.dashboard') }}" class="inline-flex min-h-10 items-center justify-center rounded-lg border border-itsc-slate-300 bg-white px-3.5 py-2 text-[13px] font-medium text-itsc-slate-700 transition-colors hover:bg-itsc-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-itsc-red-600/15">Cancelar</a>
                         @if ($estudiante->cv_path)
-                            <button type="submit" form="delete-profile-cv"
-                                class="text-left text-sm font-medium text-red-600 underline">Eliminar currículum</button>
+                            <button type="submit" form="delete-profile-cv" class="inline-flex min-h-10 items-center justify-center rounded-lg px-3.5 py-2 text-[13px] font-medium text-red-800 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-200">
+                                Eliminar currículum
+                            </button>
                         @endif
-                        <x-primary-button class="justify-center">Guardar datos básicos</x-primary-button>
+                        <button type="submit" :disabled="saving" class="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-itsc-slate-700 px-3.5 py-2 text-[13px] font-medium text-white transition-colors hover:bg-itsc-slate-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-itsc-red-600/20 disabled:cursor-wait disabled:opacity-70">
+                            <svg x-cloak x-show="saving" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4Z" />
+                            </svg>
+                            <span x-text="saving ? 'Guardando…' : 'Guardar cambios'"></span>
+                        </button>
                     </div>
                 </form>
 
@@ -137,13 +181,16 @@
                         @method('DELETE')
                     </form>
                 @endif
-            </section>
+            </x-profile-card>
 
             @include('estudiante.perfil.partials.formaciones')
             @include('estudiante.perfil.partials.experiencias')
             @include('estudiante.perfil.partials.habilidades')
-            @include('estudiante.perfil.partials.idiomas')
-            @include('estudiante.perfil.partials.certificaciones')
+
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                @include('estudiante.perfil.partials.idiomas')
+                @include('estudiante.perfil.partials.certificaciones')
+            </div>
         </div>
     </div>
 </x-app-layout>

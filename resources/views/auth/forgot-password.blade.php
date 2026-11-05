@@ -1,7 +1,10 @@
 <x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
+    <h1 class="mb-2 text-lg font-semibold text-gray-900">
+        Restablecer contraseña
+    </h1>
+    <p class="mb-4 text-sm text-gray-600">
         ¿Olvidaste tu contraseña? Indícanos tu correo electrónico y, si está registrado, te enviaremos un enlace para crear una nueva.
-    </div>
+    </p>
 
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />

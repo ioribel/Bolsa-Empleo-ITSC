@@ -120,6 +120,87 @@ class VacanteListingFiltersTest extends TestCase
             ->assertSee('Agregar carrera');
     }
 
+    public function test_student_can_view_company_profile_if_company_has_matching_vacancy_for_his_career(): void
+    {
+        $career = Carrera::create(['nombre' => 'Informática']);
+        $studentUser = User::factory()->create(['rol' => 'estudiante']);
+        Estudiante::create([
+            'user_id' => $studentUser->id,
+            'carrera_id' => $career->id,
+            'matricula' => Str::upper(Str::random(10)),
+            'tipo' => 'estudiante',
+        ]);
+
+        [$companyUser, $empresa] = $this->createCompany('Empresa con perfil visible');
+        $vacante = $this->createVacancy($empresa, 'Desarrollador Backend', 'remoto', 'publicada');
+        $vacante->carreras()->attach($career->id);
+
+        $this->actingAs($studentUser)
+            ->get(route('estudiante.empresas.show', $empresa))
+            ->assertOk()
+            ->assertSee('Perfil de la empresa')
+            ->assertSee('Empresa con perfil visible')
+            ->assertSee('Desarrollador Backend');
+    }
+
+    public function test_student_cannot_view_company_profile_without_matching_vacancy_for_his_career(): void
+    {
+        $studentCareer = Carrera::create(['nombre' => 'Informática']);
+        $otherCareer = Carrera::create(['nombre' => 'Administración']);
+        $studentUser = User::factory()->create(['rol' => 'estudiante']);
+        Estudiante::create([
+            'user_id' => $studentUser->id,
+            'carrera_id' => $studentCareer->id,
+            'matricula' => Str::upper(Str::random(10)),
+            'tipo' => 'estudiante',
+        ]);
+
+        [, $empresa] = $this->createCompany('Empresa restringida');
+        $vacante = $this->createVacancy($empresa, 'Analista de negocios', 'remoto', 'publicada');
+        $vacante->carreras()->attach($otherCareer->id);
+
+        $this->actingAs($studentUser)
+            ->get(route('estudiante.empresas.show', $empresa))
+            ->assertForbidden();
+    }
+
+    public function test_admin_can_view_any_company_profile(): void
+    {
+        $admin = User::factory()->create(['rol' => 'admin']);
+        [, $empresa] = $this->createCompany('Empresa administrativa');
+        $empresa->update(['estado' => 'pendiente']);
+
+        $this->actingAs($admin)
+            ->get(route('admin.empresas.show', $empresa))
+            ->assertOk()
+            ->assertSee('Empresa administrativa')
+            ->assertSee('Registro corporativo');
+    }
+
+    public function test_company_can_edit_its_public_profile(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        [$companyUser, $empresa] = $this->createCompany('Empresa editable');
+        $this->actingAs($companyUser)
+            ->patch(route('empresa.perfil.update'), [
+                'nombre_empresa' => 'Empresa editable premium',
+                'sector' => 'Tecnología',
+                'descripcion' => 'Creamos soluciones digitales para empresas del sector educativo.',
+                'telefono' => '+18095555555',
+                'sitio_web' => 'https://www.empresaeditable.com',
+            ])
+            ->assertRedirect(route('empresa.perfil.edit'))
+            ->assertSessionHas('status', 'Perfil de la empresa actualizado correctamente.');
+
+        $empresa->refresh();
+
+        $this->assertSame('Empresa editable premium', $empresa->nombre_empresa);
+        $this->assertSame('Tecnología', $empresa->sector);
+        $this->assertSame('https://www.empresaeditable.com', $empresa->sitio_web);
+        $this->assertSame('+18095555555', $empresa->telefono);
+    }
+
     private function createCompany(string $name): array
     {
         $user = User::factory()->create(['rol' => 'empresa']);

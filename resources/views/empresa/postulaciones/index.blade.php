@@ -1,17 +1,17 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-600 leading-tight">
+        <h1 class="font-semibold text-xl text-gray-800 dark:text-gray-600 leading-tight">
             {{ __('Postulantes: ') }}{{ $vacante->titulo }}
-        </h2>
+        </h1>
     </x-slot>
 
     <div class="py-6 sm:py-12">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             @if (session('status'))
-                <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-md">{{ session('status') }}</div>
+                <div role="status" aria-live="polite" class="mb-4 p-4 bg-green-100 text-green-800 rounded-md">{{ session('status') }}</div>
             @endif
             @if (session('error'))
-                <div class="mb-4 p-4 bg-red-100 text-red-800 rounded-md">{{ session('error') }}</div>
+                <div role="alert" class="mb-4 p-4 bg-red-100 text-red-800 rounded-md">{{ session('error') }}</div>
             @endif
 
             <div class="mb-4">

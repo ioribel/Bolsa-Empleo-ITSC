@@ -1,6 +1,6 @@
 <x-app-layout>
     <div class="min-h-[calc(100vh-4rem)] bg-slate-100 px-4 py-8 sm:px-6 sm:py-12">
-        <main class="mx-auto max-w-7xl">
+        <div class="mx-auto max-w-7xl">
             <section class="overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 shadow-2xl shadow-slate-900/15">
                 <div class="border-b border-white/10 px-6 py-7 sm:px-8 sm:py-8">
                     <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
@@ -122,6 +122,6 @@
                     </div>
                 </div>
             </section>
-        </main>
+        </div>
     </div>
 </x-app-layout>

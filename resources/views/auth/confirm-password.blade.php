@@ -1,7 +1,8 @@
 <x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
+    <h1 class="mb-2 text-lg font-semibold text-gray-900">Confirma tu contraseña</h1>
+    <p class="mb-4 text-sm text-gray-600">
         {{ __('This is a secure area of the application. Please confirm your password before continuing.') }}
-    </div>
+    </p>
 
     <form method="POST" action="{{ route('password.confirm') }}">
         @csrf
