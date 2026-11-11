@@ -56,7 +56,7 @@
             @endisset
 
             <!-- Page Content -->
-            <main id="main-content" tabindex="-1">
+            <main id="main-content" tabindex="-1" class="page-in">
                 {{ $slot }}
             </main>
             @if ($errors->any())
@@ -70,5 +70,12 @@
                 </script>
             @endif
         </div>
+        <script>
+            window.addEventListener('pageshow', (event) => {
+                if (event.persisted) {
+                    window.location.reload();
+                }
+            });
+        </script>
     </body>
 </html>

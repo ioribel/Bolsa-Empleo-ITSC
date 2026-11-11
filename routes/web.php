@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminManagementController;
 use App\Http\Controllers\Admin\CarreraController;
 use App\Http\Controllers\Admin\EmpresaController;
 use App\Http\Controllers\Admin\UsuarioController;
@@ -17,6 +18,15 @@ use App\Models\Vacante;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
+    if (auth()->check()) {
+        return match (auth()->user()->rol) {
+            'admin' => redirect()->route('admin.dashboard'),
+            'empresa' => redirect()->route('empresa.dashboard'),
+            'estudiante' => redirect()->route('estudiante.dashboard'),
+            default => redirect()->route('dashboard'),
+        };
+    }
+
     return view('welcome');
 });
 
@@ -68,6 +78,8 @@ Route::middleware(['auth', 'rol:admin'])->prefix('admin')->name('admin.')->group
     Route::get('usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
     Route::patch('usuarios/{usuario}/bloquear', [UsuarioController::class, 'bloquear'])->name('usuarios.bloquear');
     Route::patch('usuarios/{usuario}/activar', [UsuarioController::class, 'activar'])->name('usuarios.activar');
+    Route::get('administradores/create', [AdminManagementController::class, 'create'])->name('administradores.create');
+    Route::post('administradores', [AdminManagementController::class, 'store'])->name('administradores.store');
 });
 
 Route::middleware(['auth', 'rol:empresa'])->prefix('empresa')->name('empresa.')->group(function () {

@@ -7,6 +7,13 @@
 
     <div class="itsc-page py-6 sm:py-10">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-4 flex justify-end">
+                <a href="{{ route('admin.administradores.create') }}"
+                    class="inline-flex min-h-10 items-center justify-center rounded-lg bg-itsc-slate-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-itsc-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Crear administrador
+                </a>
+            </div>
+
             @if (session('status'))
                 <div role="status" aria-live="polite" class="mb-4 p-4 bg-green-100 text-green-800 rounded-md">{{ session('status') }}</div>
             @endif
@@ -51,7 +58,7 @@
                         <h3 class="break-words text-sm font-medium text-itsc-slate-900">{{ $usuario->name }}</h3>
                         <p class="mt-1 break-all text-sm text-gray-600 dark:text-gray-300">{{ $usuario->email }}</p>
                         <div class="mt-3 flex flex-wrap gap-2">
-                            <span class="rounded-full bg-gray-200 px-2 py-1 text-xs text-gray-800 dark:bg-gray-700 dark:text-gray-100">
+                            <span class="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
                                 {{ ['admin' => 'Administrador', 'estudiante' => 'Estudiante'][$usuario->rol] ?? ucfirst($usuario->rol) }}
                             </span>
                             @if ($usuario->email_verified_at)
@@ -100,7 +107,7 @@
                                 <td class="px-6 py-4">{{ $usuario->name }}</td>
                                 <td class="px-6 py-4">{{ $usuario->email }}</td>
                                 <td class="px-6 py-4">
-                                    <span class="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 rounded-full">{{ ['admin' => 'Administrador', 'estudiante' => 'Estudiante'][$usuario->rol] ?? ucfirst($usuario->rol) }}</span>
+                                    <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">{{ ['admin' => 'Administrador', 'estudiante' => 'Estudiante'][$usuario->rol] ?? ucfirst($usuario->rol) }}</span>
                                 </td>
                                 <td class="px-6 py-4">
                                     @if ($usuario->email_verified_at)

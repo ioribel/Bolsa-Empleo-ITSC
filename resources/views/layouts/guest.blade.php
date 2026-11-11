@@ -19,7 +19,7 @@
         <a href="#main-content" class="sr-only z-50 rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#042C53] shadow focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:ring-2 focus:ring-[#A32D2D] focus:ring-offset-2">
             Saltar al contenido
         </a>
-        <main id="main-content" tabindex="-1" class="min-h-screen flex flex-col sm:justify-center items-center px-4 py-8 sm:py-0 {{ request()->routeIs('login') ? 'bg-slate-100' : 'bg-gray-100' }}">
+        <main id="main-content" tabindex="-1" class="page-in min-h-screen flex flex-col sm:justify-center items-center px-4 py-8 sm:py-0 {{ request()->routeIs('login') ? 'bg-slate-100' : 'bg-gray-100' }}">
             <div>
                 <a href="/">
                     <x-application-logo class="{{ request()->routeIs('login') ? 'h-36 w-36' : 'h-12 w-12' }}" />
@@ -30,5 +30,12 @@
                 {{ $slot }}
             </div>
         </main>
+        <script>
+            window.addEventListener('pageshow', (event) => {
+                if (event.persisted) {
+                    window.location.reload();
+                }
+            });
+        </script>
     </body>
 </html>

@@ -12,6 +12,17 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         //
+        $middleware->redirectUsersTo(
+            fn (\Illuminate\Http\Request $request): string => match ($request->user()->rol) {
+                'admin' => route('admin.dashboard'),
+                'empresa' => route('empresa.dashboard'),
+                'estudiante' => route('estudiante.dashboard'),
+                default => route('dashboard'),
+            }
+        );
+        $middleware->appendToGroup('web', [
+            \App\Http\Middleware\PreventAuthenticatedPageCaching::class,
+        ]);
         $middleware->alias([
             'rol' => \App\Http\Middleware\EnsureRol::class,
         ]);
