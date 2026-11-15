@@ -16,6 +16,7 @@ use App\Notifications\PlatformDatabaseNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -102,6 +103,91 @@ class NotificationSystemTest extends TestCase
         Queue::assertPushed(\Illuminate\Events\CallQueuedListener::class, 2);
     }
 
+    public function test_all_platform_notification_types_are_sent_by_email_and_stored_in_app(): void
+    {
+        config(['queue.default' => 'sync']);
+        Notification::fake();
+
+        [$studentUser, $student, $vacancy, $companyUser] = $this->createContext();
+        $admin = User::factory()->create(['rol' => 'admin']);
+        $vacancy->publicar();
+
+        $accepted = $vacancy->postulaciones()->create([
+            'estudiante_id' => $student->id,
+            'estado' => 'aceptada',
+        ]);
+        ApplicationStatusChanged::dispatch((int) $accepted->id, 'en_revision', 'aceptada');
+
+        $rejectedUser = User::factory()->create(['rol' => 'estudiante']);
+        $rejectedStudent = Estudiante::create([
+            'user_id' => $rejectedUser->id,
+            'carrera_id' => $student->carrera_id,
+            'matricula' => 'MATRICULA-'.Str::upper(Str::random(8)),
+            'tipo' => 'estudiante',
+        ]);
+        $rejected = $vacancy->postulaciones()->create([
+            'estudiante_id' => $rejectedStudent->id,
+            'estado' => 'rechazada',
+        ]);
+        ApplicationStatusChanged::dispatch((int) $rejected->id, 'recibida', 'rechazada');
+
+        StudentAppliedToJob::dispatch((int) $rejected->id);
+
+        $pendingCompany = Empresa::create([
+            'user_id' => User::factory()->create(['rol' => 'empresa'])->id,
+            'nombre_empresa' => 'Empresa por aprobar',
+            'rnc' => 'RNC-EMAIL-PENDIENTE',
+            'estado' => 'pendiente',
+        ]);
+        CompanySubmittedForApproval::dispatch((int) $pendingCompany->id);
+
+        $this->assertPlatformNotificationSentByEmail(
+            $studentUser,
+            'vacancy.published',
+            'Nueva vacante para tu carrera: Desarrollador Web',
+            'Ver vacante',
+            route('estudiante.vacantes.show', $vacancy),
+        );
+        $this->assertPlatformNotificationSentByEmail(
+            $admin,
+            'admin.vacancy.published',
+            'Vacante publicada: Desarrollador Web',
+            'Revisar vacante',
+            route('admin.vacantes.index', ['buscar' => $vacancy->titulo]),
+        );
+        $this->assertPlatformNotificationSentByEmail(
+            $admin,
+            'admin.company.pending',
+            'Empresa pendiente de aprobación: Empresa por aprobar',
+            'Revisar solicitud',
+            route('admin.empresas.index', [
+                'estado' => 'pendiente',
+                'buscar' => 'Empresa por aprobar',
+            ]),
+        );
+        $this->assertPlatformNotificationSentByEmail(
+            $companyUser,
+            'application.received',
+            'Nueva postulación: Desarrollador Web',
+            'Revisar postulación',
+            route('empresa.vacantes.postulaciones.index', $vacancy),
+        );
+        $this->assertPlatformNotificationSentByEmail(
+            $studentUser,
+            'application.aceptada',
+            'Postulación aprobada: Desarrollador Web',
+            'Ver mi postulación',
+            route('estudiante.postulaciones.index', ['estado' => 'aceptada']),
+        );
+        $this->assertPlatformNotificationSentByEmail(
+            $rejectedUser,
+            'application.rechazada',
+            'Actualización de postulación: Desarrollador Web',
+            'Ver mis postulaciones',
+            route('estudiante.postulaciones.index', ['estado' => 'rechazada']),
+        );
+    }
+
     public function test_publishing_vacancy_notifies_all_admins_once_independently_of_targeted_careers(): void
     {
         config(['queue.default' => 'sync']);
@@ -135,8 +221,8 @@ class NotificationSystemTest extends TestCase
         $this->post('/register/empresa', [
             'name' => 'Empresa User',
             'email' => 'nueva-empresa@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'new-strong-password',
+            'password_confirmation' => 'new-strong-password',
             'nombre_empresa' => 'Empresa Pendiente',
             'rnc' => 'RNC-PENDIENTE-001',
         ])->assertRedirect(route('login'));
@@ -372,5 +458,36 @@ class NotificationSystemTest extends TestCase
         $vacancy->carreras()->attach($career->id);
 
         return [$studentUser, $student, $vacancy, $companyUser];
+    }
+
+    private function assertPlatformNotificationSentByEmail(
+        User $recipient,
+        string $event,
+        string $subject,
+        string $actionText,
+        string $actionUrl,
+    ): void {
+        Notification::assertSentTo(
+            $recipient,
+            PlatformDatabaseNotification::class,
+            function (PlatformDatabaseNotification $notification, array $channels) use (
+                $recipient,
+                $event,
+                $subject,
+                $actionText,
+                $actionUrl,
+            ): bool {
+                $mail = $notification->toMail($recipient);
+                $data = $notification->toDatabase($recipient);
+
+                return in_array('database', $channels, true)
+                    && in_array('mail', $channels, true)
+                    && ($data['event'] ?? null) === $event
+                    && $mail->subject === $subject
+                    && $mail->actionText === $actionText
+                    && $mail->actionUrl === $actionUrl
+                    && in_array($data['message'], $mail->introLines, true);
+            },
+        );
     }
 }

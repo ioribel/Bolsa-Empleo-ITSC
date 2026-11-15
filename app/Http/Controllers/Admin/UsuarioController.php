@@ -27,9 +27,7 @@ class UsuarioController extends Controller
             })
             ->when($filters['rol'] ?? null, fn ($query, $rol) => $query->where('rol', $rol))
             ->when($filters['estado'] ?? null, function ($query, $estado) {
-                $estado === 'activo'
-                    ? $query->whereNotNull('email_verified_at')
-                    : $query->whereNull('email_verified_at');
+                $query->where('activo', $estado === 'activo');
             })
             ->orderBy('rol')
             ->orderBy('name')
@@ -43,7 +41,7 @@ class UsuarioController extends Controller
     {
         $usuario = User::findOrFail($id);
         abort_if($usuario->rol === 'empresa', 404);
-        $usuario->forceFill(['email_verified_at' => null])->save();
+        $usuario->forceFill(['activo' => false])->save();
 
         return back()->with('status', "Usuario {$usuario->name} bloqueado.");
     }
@@ -52,7 +50,7 @@ class UsuarioController extends Controller
     {
         $usuario = User::findOrFail($id);
         abort_if($usuario->rol === 'empresa', 404);
-        $usuario->forceFill(['email_verified_at' => now()])->save();
+        $usuario->forceFill(['activo' => true])->save();
 
         return back()->with('status', "Usuario {$usuario->name} activado.");
     }

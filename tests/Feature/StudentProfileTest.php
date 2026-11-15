@@ -66,7 +66,11 @@ class StudentProfileTest extends TestCase
         $this->post(route('estudiante.perfil.idiomas.store'), ['idioma' => 'Inglés', 'nivel' => 'avanzado'])
             ->assertSessionHasNoErrors();
         $idioma = $student->idiomas()->firstOrFail();
-        $this->put(route('estudiante.perfil.idiomas.update', $idioma), ['idioma' => 'francés', 'nivel' => 'intermedio'])
+        $this->put(route('estudiante.perfil.idiomas.update', $idioma), [
+            'idioma' => '__otro__',
+            'idioma_personalizado' => 'francés',
+            'nivel' => 'intermedio',
+        ])
             ->assertSessionHasNoErrors();
         $this->assertSame('francés', $idioma->fresh()->idioma);
         $this->delete(route('estudiante.perfil.idiomas.destroy', $idioma))->assertSessionHasNoErrors();
@@ -147,6 +151,7 @@ class StudentProfileTest extends TestCase
         libxml_use_internal_errors($previousErrorHandling);
         $this->assertTrue($loaded);
         $xpath = new \DOMXPath($document);
+        $this->assertSame(17, $xpath->query('//select[@name="idioma"]/option')->length);
 
         foreach ($xpath->query('//form') as $form) {
             $this->assertSame(0, $xpath->query('.//form', $form)->length);
@@ -200,6 +205,45 @@ class StudentProfileTest extends TestCase
             'tipo' => 'técnica',
             'nivel' => 'básico',
         ])->assertSessionHasErrors('habilidades');
+    }
+
+    public function test_student_can_add_a_custom_language_and_it_becomes_available_in_the_dropdown(): void
+    {
+        [$user, $student] = $this->createStudent();
+        [$anotherUser] = $this->createStudent();
+
+        $this->actingAs($user)
+            ->post(route('estudiante.perfil.idiomas.store'), [
+                'idioma' => '__otro__',
+                'idioma_personalizado' => ' Esperanto ',
+                'nivel' => 'avanzado',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('estudiante_idiomas', [
+            'estudiante_id' => $student->id,
+            'idioma' => 'esperanto',
+        ]);
+
+        $this->actingAs($anotherUser)
+            ->get(route('estudiante.perfil.edit'))
+            ->assertOk()
+            ->assertSee('<option value="inglés">Inglés</option>', false)
+            ->assertSee('<option value="esperanto">Esperanto</option>', false)
+            ->assertSee('<option value="__otro__">Otro idioma...</option>', false);
+
+        $this->actingAs($user)
+            ->post(route('estudiante.perfil.idiomas.store'), [
+                'idioma' => '__otro__',
+                'idioma_personalizado' => 'ESPERANTO',
+                'nivel' => 'nativo',
+            ])
+            ->assertSessionHasErrors('idioma');
+
+        $this->post(route('estudiante.perfil.idiomas.store'), [
+            'idioma' => '__otro__',
+            'nivel' => 'básico',
+        ])->assertSessionHasErrors('idioma');
     }
 
     public function test_company_sees_structured_profile_only_for_applicants_to_its_own_vacancy(): void

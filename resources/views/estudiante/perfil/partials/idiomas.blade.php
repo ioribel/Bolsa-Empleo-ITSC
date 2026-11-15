@@ -14,16 +14,27 @@
         </button>
     </x-slot>
 
-    <form x-cloak x-show="adding" x-transition method="POST" action="{{ route('estudiante.perfil.idiomas.store') }}" class="mb-3 grid grid-cols-1 gap-3 rounded-xl border border-itsc-slate-100 p-3">
+    <form x-cloak x-show="adding" x-transition x-data="{ selectedLanguage: @js(old('idioma', '')) }" method="POST" action="{{ route('estudiante.perfil.idiomas.store') }}" class="mb-3 grid grid-cols-1 gap-3 rounded-xl border border-itsc-slate-100 p-3">
         @csrf
-        <label class="text-xs text-itsc-slate-500">Idioma<input name="idioma" required maxlength="100" placeholder="Idioma" class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm focus:border-itsc-red-600 focus:outline-none focus:ring-4 focus:ring-itsc-red-600/15"></label>
+        <label class="text-xs text-itsc-slate-500">Idioma
+            <select name="idioma" x-model="selectedLanguage" required class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm focus:border-itsc-red-600 focus:outline-none focus:ring-4 focus:ring-itsc-red-600/15">
+                <option value="">Selecciona un idioma</option>
+                @foreach ($idiomasDisponibles as $idiomaDisponible)
+                    <option value="{{ $idiomaDisponible }}">{{ mb_convert_case($idiomaDisponible, MB_CASE_TITLE, 'UTF-8') }}</option>
+                @endforeach
+                <option value="__otro__">Otro idioma...</option>
+            </select>
+        </label>
+        <label x-cloak x-show="selectedLanguage === '__otro__'" class="text-xs text-itsc-slate-500">Escribe el idioma
+            <input name="idioma_personalizado" value="{{ old('idioma_personalizado') }}" :required="selectedLanguage === '__otro__'" maxlength="100" placeholder="Idioma" class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm focus:border-itsc-red-600 focus:outline-none focus:ring-4 focus:ring-itsc-red-600/15">
+        </label>
         <label class="text-xs text-itsc-slate-500">Nivel<select name="nivel" required class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm focus:border-itsc-red-600 focus:outline-none focus:ring-4 focus:ring-itsc-red-600/15">@foreach (['básico', 'intermedio', 'avanzado', 'nativo'] as $nivel)<option value="{{ $nivel }}">{{ ucfirst($nivel) }}</option>@endforeach</select></label>
         <button class="min-h-10 rounded-lg bg-itsc-slate-700 px-4 text-[13px] font-medium text-white">Guardar idioma</button>
     </form>
 
     <div class="space-y-2">
         @forelse ($estudiante->idiomas as $idioma)
-            <article x-data="{ editing: false }" class="rounded-xl border border-itsc-slate-100 p-2.5">
+            <article x-data="{ editing: false, selectedLanguage: @js($idioma->idioma) }" class="rounded-xl border border-itsc-slate-100 p-2.5">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <p class="text-sm font-medium text-itsc-slate-900">{{ ucfirst($idioma->idioma) }} <span class="font-normal text-itsc-slate-500">· {{ ucfirst($idioma->nivel) }}</span></p>
                     <div class="flex gap-1">
@@ -41,7 +52,18 @@
                 </div>
                 <form x-cloak x-show="editing" x-transition method="POST" action="{{ route('estudiante.perfil.idiomas.update', $idioma) }}" class="mt-3 grid grid-cols-1 gap-3 border-t border-itsc-slate-100 pt-3">
                     @csrf @method('PUT')
-                    <label class="text-xs text-itsc-slate-500">Idioma<input name="idioma" value="{{ $idioma->idioma }}" required maxlength="100" class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm"></label>
+                    <label class="text-xs text-itsc-slate-500">Idioma
+                        <select name="idioma" x-model="selectedLanguage" required class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm">
+                            <option value="">Selecciona un idioma</option>
+                            @foreach ($idiomasDisponibles as $idiomaDisponible)
+                                <option value="{{ $idiomaDisponible }}">{{ mb_convert_case($idiomaDisponible, MB_CASE_TITLE, 'UTF-8') }}</option>
+                            @endforeach
+                            <option value="__otro__">Otro idioma...</option>
+                        </select>
+                    </label>
+                    <label x-cloak x-show="selectedLanguage === '__otro__'" class="text-xs text-itsc-slate-500">Escribe el idioma
+                        <input name="idioma_personalizado" :required="selectedLanguage === '__otro__'" maxlength="100" placeholder="Idioma" class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm">
+                    </label>
                     <label class="text-xs text-itsc-slate-500">Nivel<select name="nivel" required class="mt-1 h-10 w-full rounded-lg border border-itsc-slate-300 px-3 text-sm">@foreach (['básico', 'intermedio', 'avanzado', 'nativo'] as $nivel)<option value="{{ $nivel }}" @selected($idioma->nivel === $nivel)>{{ ucfirst($nivel) }}</option>@endforeach</select></label>
                     <button class="min-h-10 rounded-lg bg-itsc-slate-700 px-3 text-[13px] font-medium text-white">Guardar cambios</button>
                 </form>

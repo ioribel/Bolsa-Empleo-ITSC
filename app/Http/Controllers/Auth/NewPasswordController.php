@@ -32,16 +32,16 @@ class NewPasswordController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'token' => ['required'],
-            'email' => ['required', 'email'],
-            'password' => ['required', 'confirmed', Rules\Password::min(8)],
+            'token' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255'],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
             'token.required' => 'El token de recuperación es obligatorio.',
             'email.required' => 'El correo electrónico es obligatorio.',
             'email.email' => 'Ingresa un correo electrónico válido.',
             'password.required' => 'La contraseña es obligatoria.',
             'password.confirmed' => 'La confirmación de la contraseña no coincide.',
-            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.min' => 'La contraseña debe tener al menos 12 caracteres.',
         ]);
 
         // Here we will attempt to reset the user's password. If it is successful we

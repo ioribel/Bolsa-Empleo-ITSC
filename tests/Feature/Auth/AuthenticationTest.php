@@ -19,6 +19,7 @@ class AuthenticationTest extends TestCase
             ->assertSee('Inicia sesión')
             ->assertSee('Correo electrónico')
             ->assertSee('Contraseña')
+            ->assertSee('Mostrar contraseña')
             ->assertDontSee('Log In');
     }
 
@@ -92,6 +93,21 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 
+    public function test_inactive_users_cannot_authenticate(): void
+    {
+        $user = User::factory()->create(['activo' => false]);
+
+        $response = $this->from('/login')->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertGuest();
+        $response->assertRedirect('/login')
+            ->assertSessionHasErrors('email');
+        $this->assertStringContainsString('bloqueada por el administrador', session('errors')->first('email'));
+    }
+
     public function test_pending_companies_cannot_authenticate(): void
     {
         $user = User::factory()->create(['rol' => 'empresa']);
@@ -142,6 +158,39 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertGuest();
+    }
+
+    public function test_login_attempts_are_limited_per_account_across_ips(): void
+    {
+        for ($attempt = 1; $attempt <= 10; $attempt++) {
+            $this->withServerVariables(['REMOTE_ADDR' => '192.0.2.'.$attempt])
+                ->post('/login', [
+                    'email' => 'target@example.com',
+                    'password' => 'wrong-password',
+                ]);
+        }
+
+        $this->withServerVariables(['REMOTE_ADDR' => '192.0.2.11'])
+            ->post('/login', [
+                'email' => 'target@example.com',
+                'password' => 'wrong-password',
+            ])
+            ->assertTooManyRequests();
+    }
+
+    public function test_login_attempts_are_limited_per_ip_across_accounts(): void
+    {
+        for ($attempt = 1; $attempt <= 30; $attempt++) {
+            $this->post('/login', [
+                'email' => "user{$attempt}@example.com",
+                'password' => 'wrong-password',
+            ]);
+        }
+
+        $this->post('/login', [
+            'email' => 'another@example.com',
+            'password' => 'wrong-password',
+        ])->assertTooManyRequests();
     }
 
     public function test_users_can_logout(): void

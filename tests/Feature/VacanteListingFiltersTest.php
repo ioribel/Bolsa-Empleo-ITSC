@@ -91,6 +91,7 @@ class VacanteListingFiltersTest extends TestCase
         User::factory()->create([
             'name' => 'Usuario Estudiante Bloqueado',
             'rol' => 'estudiante',
+            'activo' => false,
             'email_verified_at' => null,
         ]);
         Carrera::create(['nombre' => 'Ingeniería de Software']);
@@ -130,8 +131,8 @@ class VacanteListingFiltersTest extends TestCase
             'matricula' => Str::upper(Str::random(10)),
             'tipo' => 'estudiante',
         ]);
-
         [$companyUser, $empresa] = $this->createCompany('Empresa con perfil visible');
+        $empresa->update(['sitio_web' => 'www.empresa-demo.test']);
         $vacante = $this->createVacancy($empresa, 'Desarrollador Backend', 'remoto', 'publicada');
         $vacante->carreras()->attach($career->id);
 
@@ -140,6 +141,7 @@ class VacanteListingFiltersTest extends TestCase
             ->assertOk()
             ->assertSee('Perfil de la empresa')
             ->assertSee('Empresa con perfil visible')
+            ->assertSee('href="https://www.empresa-demo.test"', false)
             ->assertSee('Desarrollador Backend');
     }
 
@@ -168,12 +170,16 @@ class VacanteListingFiltersTest extends TestCase
     {
         $admin = User::factory()->create(['rol' => 'admin']);
         [, $empresa] = $this->createCompany('Empresa administrativa');
-        $empresa->update(['estado' => 'pendiente']);
+        $empresa->update([
+            'estado' => 'pendiente',
+            'sitio_web' => 'https://www.empresa-admin-demo.test',
+        ]);
 
         $this->actingAs($admin)
             ->get(route('admin.empresas.show', $empresa))
             ->assertOk()
             ->assertSee('Empresa administrativa')
+            ->assertSee('href="https://www.empresa-admin-demo.test"', false)
             ->assertSee('Registro corporativo');
     }
 

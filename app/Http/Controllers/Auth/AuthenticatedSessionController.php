@@ -44,7 +44,7 @@ class AuthenticatedSessionController extends Controller
             throw ValidationException::withMessages(['email' => $message]);
         }
 
-        if ($user->email_verified_at === null) {
+        if (! $user->activo) {
             Auth::logout();
 
             throw ValidationException::withMessages([

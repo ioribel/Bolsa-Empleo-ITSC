@@ -46,6 +46,8 @@ class NotifyStudentsOfPublishedVacancy implements ShouldQueueAfterCommit
                             'event' => 'vacancy.published',
                             'title' => 'Nueva oportunidad laboral',
                             'message' => $vacante->empresa->nombre_empresa.' ha publicado una vacante de '.$vacante->titulo.' relacionada con tu carrera.',
+                            'company_name' => $vacante->empresa->nombre_empresa,
+                            'vacancy_title' => $vacante->titulo,
                             'vacancy_id' => $vacante->id,
                         ],
                     );

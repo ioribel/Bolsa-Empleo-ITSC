@@ -38,6 +38,7 @@ class NotifyAdminsOfPendingCompany implements ShouldQueueAfterCommit
                             'event' => 'admin.company.pending',
                             'title' => 'Empresa pendiente de aprobación',
                             'message' => "{$company->nombre_empresa} ha solicitado registrarse y está pendiente de revisión.",
+                            'company_name' => $company->nombre_empresa,
                             'company_id' => $company->id,
                         ],
                     );

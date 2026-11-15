@@ -8,6 +8,10 @@ class IdiomaRequest extends StudentProfileRequest
 {
     protected function prepareForValidation(): void
     {
+        if ($this->input('idioma') === '__otro__') {
+            $this->merge(['idioma' => $this->input('idioma_personalizado')]);
+        }
+
         $this->sanitizeText(['idioma']);
         if (is_string($this->input('idioma'))) {
             $this->merge(['idioma' => mb_strtolower(preg_replace('/\s+/u', ' ', trim($this->input('idioma'))) ?? '')]);

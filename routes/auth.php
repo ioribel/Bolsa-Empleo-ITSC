@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
+use App\Http\Controllers\Auth\EmailChangeVerificationController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -15,17 +16,20 @@ Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
 
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    Route::post('register', [RegisteredUserController::class, 'store'])
+        ->middleware('throttle:registration');
 
     Route::get('register/empresa', [\App\Http\Controllers\Auth\EmpresaRegisterController::class, 'create'])
         ->name('register.empresa');
 
-    Route::post('register/empresa', [\App\Http\Controllers\Auth\EmpresaRegisterController::class, 'store']);
+    Route::post('register/empresa', [\App\Http\Controllers\Auth\EmpresaRegisterController::class, 'store'])
+        ->middleware('throttle:registration');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
-    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+    Route::post('login', [AuthenticatedSessionController::class, 'store'])
+        ->middleware('throttle:login');
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
@@ -47,6 +51,10 @@ Route::view('password-reset/success', 'auth.password-reset-success')
     ->name('password.reset.success');
 
 Route::middleware('auth')->group(function () {
+    Route::get('email/change/{user}/{hash}', EmailChangeVerificationController::class)
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('email.change.verify');
+
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
 

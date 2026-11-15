@@ -37,6 +37,8 @@ class NotifyCompanyOfNewApplication implements ShouldQueueAfterCommit
                 'event' => 'application.received',
                 'title' => 'Nueva postulación recibida',
                 'message' => $postulacion->estudiante->user->name.' se ha postulado a tu vacante de '.$vacante->titulo.'.',
+                'student_name' => $postulacion->estudiante->user->name,
+                'vacancy_title' => $vacante->titulo,
                 'vacancy_id' => $vacante->id,
                 'application_id' => $postulacion->id,
             ],

@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -49,6 +49,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'pending_email',
     ];
 
     /**
@@ -59,6 +60,7 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
+            'activo' => 'boolean',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];

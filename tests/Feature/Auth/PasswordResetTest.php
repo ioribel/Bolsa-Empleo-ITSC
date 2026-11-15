@@ -77,8 +77,8 @@ class PasswordResetTest extends TestCase
             $response = $this->post('/reset-password', [
                 'token' => $notification->token,
                 'email' => $user->email,
-                'password' => 'password',
-                'password_confirmation' => 'password',
+                'password' => 'new-strong-password',
+                'password_confirmation' => 'new-strong-password',
             ]);
 
             $response
@@ -138,7 +138,7 @@ class PasswordResetTest extends TestCase
         });
     }
 
-    public function test_new_password_must_be_at_least_eight_characters(): void
+    public function test_new_password_must_be_at_least_twelve_characters(): void
     {
         Notification::fake();
 
@@ -150,8 +150,8 @@ class PasswordResetTest extends TestCase
             $response = $this->post('/reset-password', [
                 'token' => $notification->token,
                 'email' => $user->email,
-                'password' => 'short',
-                'password_confirmation' => 'short',
+                'password' => 'short-pass',
+                'password_confirmation' => 'short-pass',
             ]);
 
             $response->assertSessionHasErrors('password');

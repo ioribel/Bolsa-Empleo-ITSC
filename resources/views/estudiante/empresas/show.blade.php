@@ -99,7 +99,7 @@
                                 @if ($empresa->sitio_web)
                                     <li class="flex items-center gap-3">
                                         <span class="font-medium text-slate-500 dark:text-slate-400">Sitio web:</span>
-                                        <a href="{{ str_starts_with($empresa->sitio_web, ['http://', 'https://']) ? $empresa->sitio_web : 'https://' . $empresa->sitio_web }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline decoration-2 underline-offset-2 hover:text-blue-600 dark:text-blue-300">
+                                        <a href="{{ \Illuminate\Support\Str::startsWith($empresa->sitio_web, ['http://', 'https://']) ? $empresa->sitio_web : 'https://' . $empresa->sitio_web }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline decoration-2 underline-offset-2 hover:text-blue-600 dark:text-blue-300">
                                             {{ $empresa->sitio_web }}
                                         </a>
                                     </li>

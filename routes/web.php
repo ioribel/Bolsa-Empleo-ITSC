@@ -40,7 +40,12 @@ Route::get('/dashboard', function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->middleware('throttle:email-change')
+        ->name('profile.update');
+    Route::post('/profile/email-change/resend', [ProfileController::class, 'resendEmailChangeVerification'])
+        ->middleware('throttle:email-change')
+        ->name('profile.email-change.resend');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');

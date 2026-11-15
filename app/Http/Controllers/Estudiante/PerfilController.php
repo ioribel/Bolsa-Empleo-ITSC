@@ -5,12 +5,31 @@ namespace App\Http\Controllers\Estudiante;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Estudiante\UpdateStudentProfileRequest;
 use App\Models\Estudiante;
+use App\Models\EstudianteIdioma;
 use App\Models\Habilidad;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 
 class PerfilController extends Controller
 {
+    private const IDIOMAS_MAS_HABLADOS = [
+        'inglés',
+        'chino mandarín',
+        'hindi',
+        'español',
+        'árabe',
+        'francés',
+        'bengalí',
+        'portugués',
+        'ruso',
+        'indonesio',
+        'urdu',
+        'alemán',
+        'japonés',
+        'pidgin nigeriano',
+        'maratí',
+    ];
+
     public function edit()
     {
         $estudiante = $this->student();
@@ -24,6 +43,10 @@ class PerfilController extends Controller
             'user',
         ]);
         $catalogoHabilidades = Habilidad::query()->orderBy('nombre')->get(['id', 'nombre', 'tipo']);
+        $idiomasDisponibles = collect(self::IDIOMAS_MAS_HABLADOS)
+            ->merge(EstudianteIdioma::query()->distinct()->orderBy('idioma')->pluck('idioma'))
+            ->unique(fn (string $idioma): string => mb_strtolower($idioma))
+            ->values();
         $cvDetails = null;
 
         if ($estudiante->cv_path) {
@@ -39,7 +62,12 @@ class PerfilController extends Controller
             }
         }
 
-        return view('estudiante.perfil.edit', compact('estudiante', 'cvDetails', 'catalogoHabilidades'));
+        return view('estudiante.perfil.edit', compact(
+            'estudiante',
+            'cvDetails',
+            'catalogoHabilidades',
+            'idiomasDisponibles',
+        ));
     }
 
     public function cv()

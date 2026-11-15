@@ -28,7 +28,7 @@ Proyecto final de la asignatura **SOF-113 - PROYECTO FINAL**.
 - Postulación de estudiantes a vacantes dirigidas a su carrera, con prevención de postulaciones duplicadas.
 - Gestión de postulaciones por la empresa con flujo de estados: `recibida → en revisión → aceptada / rechazada`.
 - Perfil de estudiante con carga de currículum (PDF).
-- Gestión de usuarios (bloqueo/activación) y catálogo de carreras por el administrador.
+- Las cuentas de estudiantes y egresados quedan activas al registrarse; el administrador puede bloquearlas o reactivarlas manualmente. También gestiona el catálogo de carreras.
 - Roles y permisos aplicados por middleware en cada grupo de rutas.
 - Asistente de empleabilidad con análisis puntual del CV y generación de una versión adaptada en PDF.
 - Notificaciones internas para nuevas postulaciones, vacantes publicadas y cambios finales en postulaciones.
@@ -50,7 +50,7 @@ La extracción se realiza localmente y admite PDF con texto seleccionable de has
 
 ## Modelo de datos
 
-La aplicación reutiliza las tablas existentes y añade `cv_original_name` a `estudiantes` para mostrar el nombre del archivo. El perfil profesional del estudiante guarda formación, experiencia, habilidades, idiomas y certificaciones en tablas relacionadas; sus enlaces y titular se guardan en `estudiantes`. La completitud pondera por igual ocho criterios: titular, resumen, CV, formación, experiencia, al menos tres habilidades, un idioma y un enlace profesional. La migración agrega unicidad a `estudiantes.user_id` y detiene su ejecución con un mensaje explícito si encuentra usuarios duplicados. El catálogo inicial de 41 habilidades se carga mediante `HabilidadSeeder` sin eliminar las entradas existentes.
+La aplicación reutiliza las tablas existentes y añade `cv_original_name` a `estudiantes` para mostrar el nombre del archivo. El perfil profesional del estudiante guarda formación, experiencia, habilidades, idiomas y certificaciones en tablas relacionadas; sus enlaces y titular se guardan en `estudiantes`. El selector de idiomas ofrece 15 idiomas frecuentes y agrega las opciones personalizadas que ya estén registradas en perfiles. La completitud pondera por igual ocho criterios: titular, resumen, CV, formación, experiencia, al menos tres habilidades, un idioma y un enlace profesional. La migración agrega unicidad a `estudiantes.user_id` y detiene su ejecución con un mensaje explícito si encuentra usuarios duplicados. El catálogo inicial de 41 habilidades se carga mediante `HabilidadSeeder` sin eliminar las entradas existentes.
 
 El sistema de notificaciones utiliza la tabla estándar de Laravel `notifications` y `notification_deliveries` para evitar duplicados ante reintentos de cola. Los análisis de empleabilidad no se almacenan como historial. `Estudiante::perfilComoTexto()` prepara texto profesional sin datos identificativos, contacto ni enlaces; con consentimiento, el análisis redacta también ese bloque antes de enviarlo a Gemini y limita su tamaño a 8 000 caracteres.
 
@@ -58,14 +58,14 @@ El sistema de notificaciones utiliza la tabla estándar de Laravel `notification
 
 La campanita compartida aparece para estudiantes, empresas y administradores. Las notificaciones persistidas se consultan exclusivamente desde la cuenta autenticada; se muestran las más recientes y la campana consulta cambios cada 30 segundos mientras la pestaña está visible. Al abrir una notificación, el servidor comprueba nuevamente la pertenencia y disponibilidad del recurso antes de marcarla como leída y redirigir.
 
-Los eventos de postulación, publicación de vacantes, cambios de estado finales y registro de empresas pendientes se procesan después del commit. Al publicarse una vacante, se notifica a los estudiantes de las carreras seleccionadas y a los administradores. Al registrarse una empresa pendiente, se notifica a los administradores. Los listeners usan la cola configurada en `.env`; en desarrollo se puede iniciar con:
+Los eventos de postulación, publicación de vacantes, cambios de estado finales y registro de empresas pendientes se procesan después del commit. Cada notificación de la campana también se envía por correo al mismo destinatario, con asunto y texto específicos para el evento, y un enlace al recurso correspondiente cuando sigue disponible y autorizado; en caso contrario, se usa el centro de notificaciones. Al publicarse una vacante, se notifica a los estudiantes de las carreras seleccionadas y a los administradores. Al registrarse una empresa pendiente, se notifica a los administradores. Los listeners y envíos usan la cola configurada en `.env`; en desarrollo se puede iniciar con:
 
 ```bash
 php artisan migrate
 php artisan queue:work --tries=3
 ```
 
-El comando `composer dev` también inicia un worker de cola. En producción, configura un supervisor o servicio equivalente para mantener `queue:work` en ejecución y ejecuta las migraciones como parte del despliegue. La actualización usa polling para evitar requerir WebSockets, Reverb o servicios adicionales.
+El comando `composer dev` también inicia un worker de cola. Configura `MAIL_MAILER`, el host/puerto y las credenciales del transporte para entregar los correos; si se usa `log`, el contenido se escribe en los logs en lugar de enviarse. En producción, configura un supervisor o servicio equivalente para mantener `queue:work` en ejecución y ejecuta las migraciones como parte del despliegue. La actualización usa polling para evitar requerir WebSockets, Reverb o servicios adicionales.
 
 ## Cierre automático de vacantes
 

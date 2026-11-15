@@ -38,6 +38,8 @@ class NotifyAdminsOfPublishedVacancy implements ShouldQueueAfterCommit
                             'event' => 'admin.vacancy.published',
                             'title' => 'Nueva vacante publicada',
                             'message' => "{$vacancy->empresa->nombre_empresa} publicó la vacante {$vacancy->titulo}.",
+                            'company_name' => $vacancy->empresa->nombre_empresa,
+                            'vacancy_title' => $vacancy->titulo,
                             'vacancy_id' => $vacancy->id,
                         ],
                     );

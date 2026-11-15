@@ -61,14 +61,14 @@
                             <span class="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
                                 {{ ['admin' => 'Administrador', 'estudiante' => 'Estudiante'][$usuario->rol] ?? ucfirst($usuario->rol) }}
                             </span>
-                            @if ($usuario->email_verified_at)
+                            @if ($usuario->activo)
                                 <span class="rounded-full bg-green-100 px-2 py-1 text-xs text-green-800">Activo</span>
                             @else
                                 <span class="rounded-full bg-red-100 px-2 py-1 text-xs text-red-800">Bloqueado</span>
                             @endif
                         </div>
                         <div class="mt-4 border-t border-itsc-slate-100 pt-3">
-                            @if ($usuario->email_verified_at)
+                            @if ($usuario->activo)
                                 <form method="POST" action="{{ route('admin.usuarios.bloquear', $usuario) }}"
                                       onsubmit="return confirm('¿Bloquear a este usuario?');">
                                     @csrf @method('PATCH')
@@ -110,14 +110,14 @@
                                     <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">{{ ['admin' => 'Administrador', 'estudiante' => 'Estudiante'][$usuario->rol] ?? ucfirst($usuario->rol) }}</span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    @if ($usuario->email_verified_at)
+                                    @if ($usuario->activo)
                                         <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Activo</span>
                                     @else
                                         <span class="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">Bloqueado</span>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4">
-                                    @if ($usuario->email_verified_at)
+                                    @if ($usuario->activo)
                                         <form method="POST" action="{{ route('admin.usuarios.bloquear', $usuario) }}"
                                               onsubmit="return confirm('¿Bloquear a este usuario?');">
                                             @csrf @method('PATCH')

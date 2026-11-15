@@ -24,7 +24,15 @@ class EmpresaRegisterController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                'unique:'.User::class,
+                'unique:users,pending_email',
+            ],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'nombre_empresa' => ['required', 'string', 'max:255'],
             'rnc' => ['required', 'string', 'max:20', 'unique:empresas,rnc'],

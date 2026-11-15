@@ -22,10 +22,8 @@
         <div class="mt-4">
             <x-input-label for="password" value="Contraseña" class="!text-slate-200" />
 
-            <x-text-input id="password" class="mt-1 block w-full border-slate-300 bg-white text-slate-900 focus:border-sky-400 focus:ring-sky-400"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
+            <x-password-input id="password" class="mt-1 block w-full border-slate-300 bg-white text-slate-900 focus:border-sky-400 focus:ring-sky-400"
+                              name="password" required autocomplete="current-password" />
 
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>

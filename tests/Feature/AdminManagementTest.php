@@ -107,6 +107,35 @@ class AdminManagementTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'no.autorizado@example.com']);
     }
 
+    public function test_admin_can_manually_block_and_reactivate_student_accounts(): void
+    {
+        $admin = User::factory()->create(['rol' => 'admin']);
+        $student = User::factory()->create(['rol' => 'estudiante']);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.usuarios.bloquear', $student))
+            ->assertRedirect();
+
+        $this->assertFalse($student->fresh()->activo);
+
+        $this->patch(route('admin.usuarios.activar', $student))
+            ->assertRedirect();
+
+        $this->assertTrue($student->fresh()->activo);
+    }
+
+    public function test_non_admin_cannot_change_student_activation(): void
+    {
+        $student = User::factory()->create(['rol' => 'estudiante']);
+        $otherStudent = User::factory()->create(['rol' => 'estudiante']);
+
+        $this->actingAs($student)
+            ->patch(route('admin.usuarios.bloquear', $otherStudent))
+            ->assertForbidden();
+
+        $this->assertTrue($otherStudent->fresh()->activo);
+    }
+
     public function test_admin_creation_validates_unique_email_confirmation_and_password_complexity(): void
     {
         $admin = User::factory()->create(['rol' => 'admin']);
@@ -140,5 +169,23 @@ class AdminManagementTest extends TestCase
             ->assertSessionHasErrors('password');
 
         $this->assertDatabaseCount('users', 1);
+    }
+
+    public function test_admin_creation_rejects_an_email_pending_confirmation_on_another_account(): void
+    {
+        $admin = User::factory()->create(['rol' => 'admin']);
+        User::factory()->create(['pending_email' => 'reserved@example.com']);
+
+        $this->actingAs($admin)
+            ->from(route('admin.administradores.create'))
+            ->post(route('admin.administradores.store'), [
+                'name' => 'Nuevo Administrador',
+                'email' => 'reserved@example.com',
+                'password' => 'AdminPass123',
+                'password_confirmation' => 'AdminPass123',
+            ])
+            ->assertSessionHasErrors('email');
+
+        $this->assertDatabaseCount('users', 2);
     }
 }

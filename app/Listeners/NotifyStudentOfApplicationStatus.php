@@ -45,6 +45,8 @@ class NotifyStudentOfApplicationStatus implements ShouldQueueAfterCommit
                 'message' => $accepted
                     ? 'Tu postulación para la vacante de '.$vacante->titulo.' ha sido aprobada por '.$vacante->empresa->nombre_empresa.'.'
                     : 'Tu postulación para la vacante de '.$vacante->titulo.' ha sido marcada como no seleccionada.',
+                'company_name' => $vacante->empresa->nombre_empresa,
+                'vacancy_title' => $vacante->titulo,
                 'vacancy_id' => $vacante->id,
                 'application_id' => $postulacion->id,
                 'status' => $event->newStatus,

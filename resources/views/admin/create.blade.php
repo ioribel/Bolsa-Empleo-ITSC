@@ -41,9 +41,9 @@
 
                     <div>
                         <label for="password" class="block text-sm font-medium text-itsc-slate-800">Contraseña inicial</label>
-                        <input id="password" name="password" type="password" required autocomplete="new-password"
+                        <x-password-input id="password" name="password" required autocomplete="new-password"
                             @error('password') aria-invalid="true" aria-describedby="password-hint password-error" @enderror
-                            class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                            class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100" />
                         <p id="password-hint" class="mt-2 text-sm text-itsc-slate-600">Mínimo 8 caracteres, incluyendo letras y números.</p>
                         @error('password')
                             <p id="password-error" role="alert" class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -52,8 +52,8 @@
 
                     <div>
                         <label for="password_confirmation" class="block text-sm font-medium text-itsc-slate-800">Confirmar contraseña</label>
-                        <input id="password_confirmation" name="password_confirmation" type="password" required autocomplete="new-password"
-                            class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                        <x-password-input id="password_confirmation" name="password_confirmation" required autocomplete="new-password"
+                            class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100" />
                     </div>
 
                     <div class="flex flex-col-reverse gap-3 border-t border-itsc-slate-100 pt-5 sm:flex-row sm:justify-end">

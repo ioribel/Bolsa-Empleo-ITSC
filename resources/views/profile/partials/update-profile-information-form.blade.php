@@ -27,6 +27,9 @@
             <x-input-label for="email" :value="__('Correo electrónico')" />
             <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
             <x-input-error class="mt-2" :messages="$errors->get('email')" />
+            <p class="mt-1 text-sm text-itsc-slate-500">
+                Si cambias el correo, te pediremos la contraseña actual y enviaremos un enlace de confirmación.
+            </p>
 
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
                 <div>
@@ -47,10 +50,33 @@
             @endif
         </div>
 
+        <div>
+            <x-input-label for="current_password" value="Contraseña actual (requerida para cambiar el correo)" />
+            <x-password-input id="current_password" name="current_password" class="mt-1 block w-full" autocomplete="current-password" />
+            <x-input-error class="mt-2" :messages="$errors->get('current_password')" />
+        </div>
+
+        @if ($user->pending_email)
+            <div class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+                <p>
+                    Está pendiente confirmar <strong>{{ $user->pending_email }}</strong>.
+                    Tu correo actual seguirá activo hasta que confirmes el enlace.
+                </p>
+            </div>
+        @endif
+
         <div class="flex items-center gap-4">
             <x-primary-button class="itsc-primary min-h-10 rounded-lg px-3.5 py-2 text-[13px]">{{ __('Guardar cambios') }}</x-primary-button>
 
-            @if (session('status') === 'profile-updated')
+            @if (session('status') === 'email-change-requested')
+                <p role="status" aria-live="polite" class="text-sm text-green-700">
+                    Enviamos un enlace al nuevo correo. Tu correo actual no cambiará hasta que lo confirmes.
+                </p>
+            @elseif (session('status') === 'email-updated')
+                <p role="status" aria-live="polite" class="text-sm text-green-700">
+                    El correo fue confirmado y actualizado correctamente.
+                </p>
+            @elseif (session('status') === 'profile-updated')
                 <p
                     role="status"
                     aria-live="polite"
@@ -63,4 +89,16 @@
             @endif
         </div>
     </form>
+
+    @if ($user->pending_email)
+        <form method="post" action="{{ route('profile.email-change.resend') }}" class="mt-4 space-y-3">
+            @csrf
+            <div>
+                <x-input-label for="resend_current_password" value="Contraseña actual para reenviar" />
+                <x-password-input id="resend_current_password" name="current_password" class="mt-1 block w-full" autocomplete="current-password" />
+                <x-input-error class="mt-2" :messages="$errors->getBag('emailChangeResend')->get('current_password')" />
+            </div>
+            <x-primary-button>Reenviar enlace de confirmación</x-primary-button>
+        </form>
+    @endif
 </section>

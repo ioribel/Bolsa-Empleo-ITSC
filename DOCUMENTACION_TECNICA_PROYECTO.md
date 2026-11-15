@@ -79,8 +79,8 @@ Las versiones exactas de dependencias PHP y Node se tomaron de `composer.lock` y
 ### Integraciones externas y configuración
 
 - **Gemini:** `GeminiEmployabilityService` realiza una solicitud HTTP a `generativelanguage.googleapis.com` con `GEMINI_API_KEY` y `GEMINI_MODEL`, cargados desde `config/services.php`. No se verificó la configuración efectiva ni se expuso ningún secreto.
-- **Correo:** existe una notificación por correo para la aprobación de empresas. `config/mail.php` usa `log` como mailer predeterminado si no se sobrescribe `MAIL_MAILER`; por tanto, un envío real depende del entorno.
-- **Colas:** `config/queue.php` usa `database` por defecto. Los listeners de notificaciones son encolables; deben existir las tablas y un worker activo para procesamiento asíncrono.
+- **Correo:** los avisos de la plataforma usan los canales `database` y `mail`; la aprobación de empresas, la invitación a administradores y el restablecimiento de contraseña también son correos. `config/mail.php` usa `log` como mailer predeterminado si no se sobrescribe `MAIL_MAILER`; por tanto, un envío real depende del entorno.
+- **Colas:** `config/queue.php` usa `database` por defecto. Los listeners y notificaciones de la plataforma son encolables; deben existir las tablas y un worker activo para procesamiento asíncrono.
 - **Fuentes:** el layout carga Figtree desde Bunny Fonts; es una dependencia externa de presentación.
 - No se encontró un archivo `routes/api.php`; las rutas de negocio examinadas son rutas web.
 
@@ -145,7 +145,7 @@ tests/
 
 | Clase | Campos/propiedades relevantes | Métodos principales, relaciones y dependencias |
 |---|---|---|
-| `User` — `app/Models/User.php` | `name`, `email`, `password`, `rol`; oculta `password` y `remember_token`; cast de contraseña `hashed` y `email_verified_at` a fecha. | `estudiante()`, `empresa()` y `sendPasswordResetNotification()`. Usa autenticación Eloquent, `Notifiable` y el canal de notificaciones. |
+| `User` — `app/Models/User.php` | `name`, `email`, `pending_email`, `password`, `rol`, `activo`; oculta `password`, `remember_token` y `pending_email`; cast de contraseña `hashed`, `email_verified_at` a fecha y `activo` a booleano. Implementa `MustVerifyEmail`. | `estudiante()`, `empresa()` y `sendPasswordResetNotification()`. Usa autenticación Eloquent, `Notifiable` y el canal de notificaciones. |
 | `Estudiante` — `app/Models/Estudiante.php` | `user_id`, `carrera_id`, `matricula`, `tipo`, `telefono`, `cv_path`, `cv_original_name`, `resumen`. | `user()`, `carrera()`, `postulaciones()`. Depende de almacenamiento para el CV; el controlador/servicios gestionan archivos. |
 | `Empresa` — `app/Models/Empresa.php` | `user_id`, `nombre_empresa`, `rnc`, `sector`, `descripcion`, `telefono`, `sitio_web`, `logo_path`, `estado`. | `user()`, `vacantes()`. El estado controla aprobación y acceso a creación de vacantes. |
 | `Carrera` — `app/Models/Carrera.php` | `nombre`. | `estudiantes()`, `vacantes()`. Comparte la pivot `vacante_carrera`. |
@@ -158,7 +158,7 @@ tests/
 |---|---|
 | `Auth\RegisteredUserController` | `create`, `store` | Registro estudiantil; crea `User` y `Estudiante` en transacción y autentica al nuevo usuario. |
 | `Auth\EmpresaRegisterController` | `create`, `store` | Registro transaccional de empresa pendiente; despacha `CompanySubmittedForApproval`. |
-| `Auth\AuthenticatedSessionController` | `create`, `store`, `destroy` | Inicio/cierre de sesión; rechaza empresas no aprobadas y usuarios con `email_verified_at` nulo. |
+| `Auth\AuthenticatedSessionController` | `create`, `store`, `destroy` | Inicio/cierre de sesión; rechaza empresas no aprobadas y usuarios cuyo estado administrativo `activo` es falso. |
 | `Empresa\VacanteController` | `index`, `create`, `store`, `show`, `edit`, `update`, `destroy`, `publicar`, `cerrar` | CRUD, filtros, asociaciones de carrera y ciclo de vida de vacantes propias; usa `StoreVacanteRequest`/`UpdateVacanteRequest`. |
 | `Empresa\PostulacionController` | `index`, `cv`, `enRevision`, `aceptar`, `rechazar`, `propia` | Lista postulaciones de vacantes propias, sirve CVs y cambia estados; `propia()` restringe por empresa autenticada. |
 | `Estudiante\VacanteController` | `index`, `show` | Lista/detalla vacantes publicadas de la carrera del estudiante; verifica postulación y disponibilidad del CV. |
@@ -167,9 +167,9 @@ tests/
 | `Estudiante\EmployabilityAnalysisController` | `analyze`, `downloadAdaptedCv`, `profileCvContents`, `sectionValidationRules` | Consentimiento, validación de acceso, cache temporal, validación de datos y PDF; depende de servicios de empleabilidad y Dompdf. |
 | `Admin\EmpresaController` | `index`, `aprobar`, `bloquear`, `rechazar` | Lista y cambia estado de empresas; aprobación emite notificación por correo. |
 | `Admin\CarreraController` | `index`, `store`, `update`, `destroy` | Administración del catálogo; bloquea eliminación de carreras relacionadas. |
-| `Admin\UsuarioController` | `index`, `bloquear`, `activar` | Filtra usuarios no empresariales y modifica su estado indirectamente mediante `email_verified_at`. |
+| `Admin\UsuarioController` | `index`, `bloquear`, `activar` | Filtra usuarios no empresariales y cambia explícitamente su estado administrativo `activo`. |
 | `Admin\VacanteController` | `index` | Lista vacantes publicadas con filtros; no implementa edición de vacantes. |
-| `NotificationController` | `index`, `feed`, `markRead`, `markAllRead`, `open`, `findOwnedNotification`, `destination` | Historial/feed y lectura; cada consulta se limita al usuario autenticado y las redirecciones revalidan recursos. |
+| `NotificationController` | `index`, `feed`, `markRead`, `markAllRead`, `open`, `findOwnedNotification` | Historial/feed y lectura; cada consulta se limita al usuario autenticado y las redirecciones revalidan recursos. |
 | `ProfileController` | `edit`, `update`, `destroy` | Perfil general de Breeze; cambiar email pone la marca de verificación a nulo. |
 
 ### Servicios, eventos, listeners y otros
@@ -181,7 +181,9 @@ tests/
 | `CvPrivacyRedactor` | `redact`, `redactProfile` | Omite nombre, email, teléfono, matrícula, URLs y patrones de contacto antes del envío externo. |
 | `VacancyCriteriaBuilder` | `build` | Divide requisitos/descripción en criterios únicos; límite de 30. |
 | `GeminiEmployabilityService` | `analyze`, `responseSchema` | Configura prompt/esquema JSON, invoca endpoint externo y gestiona errores HTTP/JSON. |
-| `NotificationDeliveryService` | `sendOnce(User, eventKey, data)` | Inserta clave única en `notification_deliveries` y persiste notificación si la clave es nueva. |
+| `NotificationDeliveryService` | `sendOnce(User, eventKey, data)` | Inserta clave única en `notification_deliveries` y encola la notificación de base de datos/correo si la clave es nueva. |
+| `NotificationDestinationService` | `for(User, data)` | Revalida el rol, la propiedad y el estado del recurso antes de resolver el enlace compartido por la campana y el correo; usa el centro de notificaciones como fallback. |
+| `PlatformDatabaseNotification` | `via`, `toDatabase`, `toMail`, `mailCopy` | Entrega el aviso por la campana y por correo; el asunto, introducción y CTA del correo dependen del evento, y se encola después del commit. |
 | Eventos | Propiedades de IDs y estados; `dispatch` | `CompanySubmittedForApproval`, `JobVacancyPublished`, `StudentAppliedToJob`, `ApplicationStatusChanged`; declarados para esperar al commit. |
 | Listeners | `handle(event)`; `tries = 3` | Notifican administradores, estudiantes de carreras afectadas, empresas y estudiantes; se encolan tras commit. |
 | `EnsureRol` | `handle(Request, Closure, rol)` | Devuelve 403 si el usuario autenticado no coincide con el rol esperado. |
@@ -195,7 +197,7 @@ No se identificaron clases propias de Job, repositorio, Policy, Gate ni un módu
 
 | Tabla | Campos principales / reglas verificadas |
 |---|---|
-| `users` | `id`, `name`, `email` único, `email_verified_at`, contraseña, `rol` enum (`admin`, `empresa`, `estudiante`), remember token y timestamps. |
+| `users` | `id`, `name`, `email` único, `pending_email` nullable y único, `email_verified_at`, `activo` (booleano, predeterminado `true`), contraseña, `rol` enum (`admin`, `empresa`, `estudiante`), remember token y timestamps. |
 | `estudiantes` | `user_id` FK con borrado en cascada, `carrera_id` FK, matrícula única, tipo enum (`estudiante`, `egresado`), teléfono, CV, resumen y timestamps. Migraciones posteriores agregan `cv_original_name`. |
 | `empresas` | `user_id` FK con borrado en cascada, nombre, RNC único, sector, descripción, teléfono, web, logo y estado enum (`pendiente`, `aprobada`, `rechazada`, `bloqueada`). |
 | `carreras` | `id`, nombre único y timestamps. |
@@ -241,6 +243,7 @@ erDiagram
         string email UK
         enum rol
         timestamp email_verified_at
+        boolean activo
     }
     ESTUDIANTES {
         bigint id PK
@@ -291,17 +294,17 @@ El documento describe las migraciones presentes; no certifica que hayan sido apl
 
 ## 6. Funcionalidades y estado
 
-**Criterio de estado:** “Implementada” significa que se encontró un flujo de ruta/controlador/modelo o vista correspondiente. Se indica si existe una prueba asociada, pero, dado que no se ejecutaron pruebas, ninguna se declara verificada/pasada.
+**Criterio de estado:** “Implementada” significa que se encontró un flujo de ruta/controlador/modelo o vista correspondiente. Los resultados de pruebas indican únicamente los comandos ejecutados en esta actualización.
 
 | Módulo/perfil | Funcionalidad confirmada en código | Estado y evidencia de pruebas |
 |---|---|---|
-| Autenticación | Registro de estudiante con matrícula/carrera; registro de empresa en estado pendiente; inicio/cierre de sesión; recuperación/cambio de contraseña y rutas de verificación de correo de Breeze. | Implementada. Las pruebas de `tests/Feature/Auth` pasaron en la ejecución de la suite completa de esta actualización. El `User` no implementa `MustVerifyEmail` y los dos flujos de registro asignan `email_verified_at` al crear la cuenta. |
+| Autenticación | Registro de estudiante con matrícula/carrera; registro de empresa en estado pendiente; inicio/cierre de sesión; recuperación/cambio de contraseña; cambio de correo pendiente para los tres roles, confirmado por enlace firmado. | Implementada. Las pruebas enfocadas de perfil, registro y administración pasaron; el registro inicial todavía marca el correo como verificado sin confirmación. |
 | Empresas | Listar y filtrar vacantes propias; crear, editar, mostrar y borrar; publicar y cerrar con transición de estado; listar postulaciones propias, leer CV y cambiar estado. | Implementada. La suite completa, incluidas las pruebas de filtros y CV/postulaciones, pasó en esta actualización. |
 | Estudiantes | Explorar vacantes publicadas para su carrera, ver detalles, cargar/descargar/eliminar CV, postularse y consultar/filtrar postulaciones. | Implementada. La suite completa, incluidas `VacanteListingFiltersTest` y `StudentCvTest`, pasó en esta actualización. La tabla limita duplicados con índice único. |
 | Administración | Aprobar, bloquear o rechazar empresas; mantener carreras; listar vacantes publicadas; bloquear/activar usuarios no empresariales. Dashboard con contadores. | Implementada parcialmente respecto de una administración de vacantes completa: la ruta actual solo lista vacantes; no se halló edición/aprobación administrativa de vacantes. Las pruebas incluidas en la suite completa pasaron en esta actualización. |
-| Notificaciones | Notificaciones persistentes, feed para campana, historial, lectura individual/masiva y redirección condicionada por propietario/estado del recurso. Eventos encolables para empresas, estudiantes y administradores. | Implementada en el código actual. `NotificationSystemTest` y `NotificationPersistenceTest` pasaron en la ejecución de la suite completa de esta actualización. |
+| Notificaciones | Notificaciones persistentes, feed para campana, historial, lectura individual/masiva, correo y redirección condicionada por propietario/estado del recurso. Eventos y envíos encolables para empresas, estudiantes y administradores. | Implementada en el código actual. `NotificationSystemTest` verifica los canales database y mail para los avisos de vacantes, postulaciones, estados finales y empresas pendientes. |
 | Asistente de empleabilidad | Consentimiento versionado, extracción local del PDF, anonimización, evidencia del CV/perfil vía Gemini, análisis solo con perfil suficiente y descarga PDF adaptada. | Implementada; depende de configurar Gemini o de usar un HTTP fake en pruebas. La suite completa se ejecutó en esta actualización. |
-| Email de aprobación | Notificación por email al aprobar empresa. | Implementada en código. Entrega real depende del mailer configurado; el valor predeterminado versionado es `log`. No se ejecutó un envío. |
+| Correo de notificaciones | Avisos de campana, aprobación de empresa, invitación de administrador y restablecimiento de contraseña. | Implementado en código. La entrega real depende del mailer configurado y del worker de cola; el valor predeterminado versionado es `log`. |
 
 No se encontró una integración de OCR, historial persistente de análisis, aplicación móvil/API REST, carga de logo de empresa desde un flujo de perfil, ni un panel para modificar vacantes como administrador. Esto describe lo que no se encontró en las rutas/clases revisadas; no implica que sean requisitos pendientes acordados.
 
@@ -327,7 +330,9 @@ Las rutas de negocio están en `routes/web.php`; las rutas de autenticación est
 | `GET` | `/`, `/dashboard` | Vista de bienvenida; redirección por rol. |
 | `GET/POST` | `/register`, `/register/empresa`, `/login`, `/forgot-password`, `/reset-password/{token}` | `RegisteredUserController`, `EmpresaRegisterController`, `AuthenticatedSessionController` y controladores Breeze de autenticación. |
 | `GET/POST` | `/verify-email`, `/verify-email/{id}/{hash}`, `/email/verification-notification`, `/confirm-password`, `/password`, `/logout` | Controladores de verificación, confirmación, contraseña y sesión de Breeze. |
-| `GET/PATCH/DELETE` | `/profile` | `ProfileController::edit/update/destroy`. |
+| `GET/PATCH/DELETE` | `/profile` | `ProfileController::edit/update/destroy`; cambiar correo requiere contraseña actual y deja el correo nuevo pendiente. |
+| `POST` | `/profile/email-change/resend` | Reenvía al correo pendiente un enlace de confirmación; requiere contraseña actual y tiene límite de solicitudes. |
+| `GET` | `/email/change/{user}/{hash}` | `EmailChangeVerificationController`; ruta firmada con expiración de una hora, autenticada y limitada. Actualiza el correo solo si sigue disponible. |
 | `GET/PATCH` | `/notifications`, `/notifications/feed`, `/notifications/read-all`, `/notifications/{uuid}/read`, `/notifications/{uuid}/open` | `NotificationController`; lectura por usuario autenticado. |
 | `GET/PATCH/POST/DELETE` | `/admin/dashboard`, `/admin/empresas`, `/admin/empresas/{id}/aprobar|bloquear|rechazar`, `/admin/vacantes`, `/admin/carreras`, `/admin/carreras/{id}`, `/admin/usuarios`, `/admin/usuarios/{id}/bloquear|activar` | Closures para dashboard; `Admin\EmpresaController`, `VacanteController`, `CarreraController`, `UsuarioController`. Solo admin. |
 | `GET/POST/PUT/PATCH/DELETE` | `/empresa/vacantes` y `/empresa/vacantes/{id}` | `Empresa\VacanteController` mediante resource limitado a index/create/store/show/edit/update/destroy. Solo empresa. |
@@ -351,9 +356,10 @@ Las rutas del análisis y descarga del CV tienen `throttle:cv-analysis`. `AppSer
 ### Observaciones de autenticación
 
 - `AuthenticatedSessionController` bloquea empresas que no estén aprobadas.
-- La aplicación reutiliza `email_verified_at` como indicador de cuenta bloqueada en el login y en `Admin\UsuarioController`; no existe un campo `estado` separado para usuarios.
-- Las rutas de verificación de correo están definidas, pero `User` no implementa `MustVerifyEmail`; además, el registro marca el correo como verificado. La relación entre “verificación real” y “bloqueo” debe aclararse antes de ampliar autenticación.
-- `ProfileController::update()` pone `email_verified_at` en `null` cuando cambia el correo. Como `AuthenticatedSessionController` rechaza a cualquier usuario con ese campo nulo y no se encontró un flujo activo que lo vuelva a verificar, cambiar el email puede impedir iniciar sesión de nuevo. Es un efecto observable del código, aunque no se probó en ejecución.
+- El estado administrativo de cuentas se almacena en `users.activo`, separado de `email_verified_at`. La migración conserva como bloqueadas las cuentas no empresariales que ya tenían `email_verified_at` nulo.
+- `User` implementa `MustVerifyEmail`, pero el registro inicial sigue marcando el correo como verificado sin confirmación. El cambio posterior de correo sí conserva la dirección actual hasta confirmar la nueva.
+- `ProfileController::update()` exige la contraseña actual si cambia el correo, reserva la dirección en `pending_email` y envía un enlace firmado de una hora. La confirmación requiere una sesión autenticada; el reenvío también exige contraseña y está limitado por usuario.
+- El cambio de correo no altera `email_verified_at` ni `activo` antes de confirmarse; al completarse actualiza ambos datos de correo de manera transaccional y mantiene la cuenta activa.
 - El seed de administrador contiene una contraseña predeterminada codificada en el seeder. No se reproduce aquí; debe tratarse como valor de desarrollo y no utilizarse sin rotación en un entorno real.
 
 ## 8. Flujos de negocio
@@ -478,7 +484,7 @@ La existencia de un API key funcional, worker, correo y conexión a base de dato
 
 | Componente | Responsabilidad | Dependencias | Impacto potencial de modificarlo | Riesgo |
 |---|---|---|---|---|
-| `User` / rol / `email_verified_at` | Autenticación, identidad, bloqueo y rol | Middleware, login, dashboards, perfil, notificaciones | Puede impedir login, cambiar disponibilidad de rutas o confundir bloqueo con verificación de correo. | **Alto** — el estado de cuenta se deriva del campo de verificación. |
+| `User` / rol / `activo` | Autenticación, identidad, bloqueo y rol | Middleware, login, dashboards, perfil, notificaciones | Cambiar el estado administrativo afecta la posibilidad de iniciar sesión. | **Alto** — centraliza el acceso de todos los roles. |
 | `Vacante` y estados | Ciclo de vida y oferta | Empresa, estudiante, admin, eventos, notificaciones, Gemini | Cambiar estados o relaciones afecta publicación, listados, postulación, análisis y avisos. | **Alto** — entidad central en varios flujos. |
 | `Estudiante` / CV | Carrera, perfil y documentos | Postulación, descarga, Gemini, almacenamiento, PDF | Cambios de ruta/disk o campos afectan solicitudes y privacidad del CV. | **Alto** — documento se consume en más de un proceso. |
 | `Postulacion` | Vínculo estudiante-vacante y evaluación | Vacante, estudiante, CV, listeners y notificaciones | Alterar estados/transiciones afecta elegibilidad y mensajes a ambas partes. | **Alto** — flujo con restricción única y eventos. |
@@ -496,8 +502,8 @@ La existencia de un API key funcional, worker, correo y conexión a base de dato
 
 1. **Roles manuales y autorización distribuida.** La protección combina middleware de rol con consultas en controladores; no hay Policies/Gates propios.
 2. **Cardinalidad no asegurada por la BD.** Los métodos `hasOne` entre usuario y perfil no están respaldados por índices `UNIQUE` en `user_id`.
-3. **Campo con doble propósito.** `email_verified_at` se establece al registrar y también se usa para representar bloqueo de cuenta. Esto mezcla verificación y estado administrativo.
-4. **Cambio de correo puede causar bloqueo de acceso.** `ProfileController` borra `email_verified_at` al modificarlo y el login rechaza ese valor nulo; no se encontró un flujo de verificación efectivo que lo restablezca.
+3. **Estado administrativo separado.** La cuenta usa `activo`; no debe reutilizarse `email_verified_at` para bloquear o reactivar usuarios.
+4. **Cambio de correo.** La dirección nueva se almacena como pendiente hasta validar el enlace firmado; el registro inicial aún marca las direcciones como verificadas sin confirmación.
 5. **Límite compartido entre dos acciones.** Tanto analizar como descargar CV usan `throttle:cv-analysis`; el proveedor define cinco solicitudes por hora por usuario.
 6. **Versiones frontend mezcladas.** Tailwind Vite plugin es 4.x mientras Tailwind CSS y la sintaxis/configuración corresponden a 3.x. `npm run build` se ejecutó correctamente durante esta actualización, aunque la diferencia de versiones permanece.
 7. **Diferencia de motor predeterminado.** README describe MySQL, pero `config/database.php` cae a SQLite si no se establece la variable de conexión.
@@ -560,14 +566,14 @@ La existencia de un API key funcional, worker, correo y conexión a base de dato
 >
 > Al agregar una función, conserva las rutas nombradas y grupos por rol, agrega Form Request si las reglas crecen, limita consultas a recursos del usuario, implementa migración para cambios de esquema y escribe pruebas en `tests/Feature` o `tests/Unit`. No hay capa de repositorios, policies/Gates propios ni API REST detectada.
 >
-> Precauciones: `email_verified_at` se usa también para bloquear cuentas; las relaciones `hasOne` de perfiles no tienen `UNIQUE` en la BD; se debe alinear Tailwind 3 con el plugin Vite 4; el motor real depende del entorno; no se inspeccionó `.env` ni se validó el despliegue. El árbol de trabajo analizado contiene cambios sin confirmar en autenticación/notificaciones y archivos de notificación nuevos.
+> Precauciones: el estado administrativo se almacena en `users.activo`; las relaciones `hasOne` de perfiles no tienen `UNIQUE` en la BD; se debe alinear Tailwind 3 con el plugin Vite 4; el motor real depende del entorno; no se inspeccionó `.env` ni se validó el despliegue. El árbol de trabajo descrito por este análisis puede diferir del estado actual.
 
 ## 14. Recomendaciones y roadmap
 
 | Prioridad | Mejora propuesta | Justificación basada en evidencia | Componentes afectados | Complejidad |
 |---|---|---|---|---|
 | Alta | Alinear el toolchain de Tailwind (plugin Vite, Tailwind y PostCSS) y validar build. | El lock tiene plugin 4.x con Tailwind 3.x, directivas y PostCSS de la configuración 3.x. | `package.json`, `package-lock.json`, `resources/css/app.css`, `postcss.config.js`, `vite.config.js` | Baja-media |
-| Alta | Definir semántica de verificación y bloqueo de cuentas por separado, y cubrir el cambio de correo. | El registro marca email como verificado, el panel usa ese campo para bloquear/activar y el cambio de email lo vuelve nulo, tras lo cual el login rechaza al usuario. | `User`, `ProfileController`, controladores de auth/admin, migraciones y pruebas | Media |
+| Alta | Definir y aplicar la verificación del correo durante el registro inicial. | Los flujos de registro siguen marcando el correo como verificado sin enviar una confirmación; el cambio posterior de correo sí requiere enlace firmado. | Controladores de registro, `User`, rutas de verificación, pruebas | Media |
 | Alta | Asegurar la cardinalidad de perfiles si es realmente uno-a-uno. | Eloquent declara `hasOne`, pero las FKs `user_id` de `estudiantes` y `empresas` no son únicas. | Migración correctiva, modelos, pruebas/datos existentes | Media |
 | Alta | Validar entorno de colas, correo y motor de base de datos en despliegue. | La cola predeterminada es `database`, el mailer predeterminado `log`, README recomienda MySQL y configuración cae a SQLite. | `.env`/entorno, despliegue, `config/*`, worker | Media |
 | Media | Manejar explícitamente colisiones de postulación y fallos entre almacenamiento/BD. | Hay validación previa más índice único, y la escritura del archivo y del registro son operaciones separadas. | `Estudiante\PostulacionController`, pruebas y almacenamiento | Media |

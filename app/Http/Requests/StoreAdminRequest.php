@@ -21,8 +21,16 @@ class StoreAdminRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)],
-            'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                Rule::unique(User::class),
+                Rule::unique(User::class, 'pending_email'),
+            ],
+            'password' => ['required', 'confirmed', Password::min(12)->max(255)->letters()->numbers()],
         ];
     }
 
@@ -39,7 +47,7 @@ class StoreAdminRequest extends FormRequest
             'email.unique' => 'Ya existe una cuenta con ese correo electrónico.',
             'password.required' => 'La contraseña es obligatoria.',
             'password.confirmed' => 'La confirmación de la contraseña no coincide.',
-            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.min' => 'La contraseña debe tener al menos 12 caracteres.',
             'password.letters' => 'La contraseña debe incluir letras.',
             'password.numbers' => 'La contraseña debe incluir números.',
         ];
